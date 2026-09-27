@@ -7,7 +7,7 @@ import { Plus, Pencil, Trash2 } from "lucide-react";
 import type { Category } from "@/types/database";
 import { saveCategory, deleteCategory, type AdminState } from "@/lib/actions/admin";
 import { Button } from "@/components/ui/button";
-import { Input, Textarea, Field } from "@/components/ui/field";
+import { Input, Textarea, Select, Field } from "@/components/ui/field";
 import { Card, Badge } from "@/components/ui/primitives";
 import { ImageUploader } from "./image-uploader";
 
@@ -40,6 +40,16 @@ export function CategoryManager({
 
   const showForm = adding || editing !== null;
 
+  // Main categories in position order, each followed by its sub-categories,
+  // so the table reads as the hierarchy the storefront shows.
+  const mains = categories.filter((c) => !c.parent_id);
+  const childrenOf = (id: string) => categories.filter((c) => c.parent_id === id);
+  const ordered = [
+    ...mains.flatMap((m) => [m, ...childrenOf(m.id)]),
+    // A sub-category whose parent is somehow missing still gets listed.
+    ...categories.filter((c) => c.parent_id && !mains.some((m) => m.id === c.parent_id)),
+  ];
+
   return (
     <>
       {showForm ? (
@@ -47,6 +57,8 @@ export function CategoryManager({
           // Remount per category so the defaults (and the picture) reset.
           key={editing?.id ?? "new"}
           category={editing}
+          mains={mains}
+          hasChildren={editing ? childrenOf(editing.id).length > 0 : false}
           onDone={() => {
             setAdding(false);
             setEditing(null);
@@ -78,9 +90,27 @@ export function CategoryManager({
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
-            {categories.map((c) => (
+            {ordered.map((c) => (
               <tr key={c.id} className="hover:bg-surface-sunken">
-                <td className="px-4 py-3 font-medium text-ink">{c.name}</td>
+                <td className="px-4 py-3 font-medium text-ink">
+                  {c.parent_id ? (
+                    <span className="flex items-center gap-1.5 pl-5 font-normal text-ink-soft">
+                      <span className="text-ink-faint" aria-hidden>
+                        ↳
+                      </span>
+                      {c.name}
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      {c.name}
+                      {childrenOf(c.id).length > 0 ? (
+                        <span className="rounded-full bg-surface-sunken px-1.5 text-[11px] font-normal text-ink-muted">
+                          {childrenOf(c.id).length} sub
+                        </span>
+                      ) : null}
+                    </span>
+                  )}
+                </td>
                 <td className="px-3 py-3 text-xs text-ink-muted tabular">{c.slug}</td>
                 <td className="px-3 py-3 text-xs text-ink-muted">{c.icon ?? "—"}</td>
                 <td className="px-3 py-3 text-right tabular text-ink-muted">
@@ -128,10 +158,16 @@ export function CategoryManager({
 
 function CategoryForm({
   category,
+  mains,
+  hasChildren,
   onDone,
   onCancel,
 }: {
   category: Category | null;
+  /** Main categories, the only valid parents. */
+  mains: Category[];
+  /** A category holding sub-categories must stay a main category. */
+  hasChildren: boolean;
   onDone: () => void;
   onCancel: () => void;
 }) {
@@ -161,6 +197,32 @@ function CategoryForm({
 
           <Field label="Slug" htmlFor="slug" hint="Blank generates from the name">
             <Input id="slug" name="slug" defaultValue={category?.slug ?? ""} />
+          </Field>
+
+          <Field
+            label="Parent category"
+            htmlFor="parent_id"
+            hint={
+              hasChildren
+                ? "It has sub-categories of its own, so it stays a main category"
+                : "Leave as “None” for a main category"
+            }
+          >
+            <Select
+              id="parent_id"
+              name="parent_id"
+              defaultValue={category?.parent_id ?? ""}
+              disabled={hasChildren}
+            >
+              <option value="">None — main category</option>
+              {mains
+                .filter((m) => m.id !== category?.id)
+                .map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}
+                  </option>
+                ))}
+            </Select>
           </Field>
 
           <Field

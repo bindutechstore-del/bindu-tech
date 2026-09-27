@@ -123,8 +123,16 @@ export async function listProducts(
       .select("id")
       .eq("slug", query.category)
       .maybeSingle();
+    // A main category shows its sub-categories' products too: "Headphone &
+    // Earphone" must include what is filed under "Earbud Headphones".
+    const { data: subs } = cat
+      ? await supabase.from("categories").select("id").eq("parent_id", cat.id).eq("is_active", true)
+      : { data: [] };
     // An unknown slug must return nothing, not everything.
-    q = q.eq("category_id", cat?.id ?? "00000000-0000-0000-0000-000000000000");
+    q = q.in("category_id", [
+      cat?.id ?? "00000000-0000-0000-0000-000000000000",
+      ...((subs ?? []) as { id: string }[]).map((s) => s.id),
+    ]);
   }
 
   if (query.brand) {

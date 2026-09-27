@@ -470,9 +470,38 @@ export async function saveCategory(
   }
 
   const id = String(formData.get("id") ?? "");
+  const db = createAdminClient();
+
+  // One level of nesting: a main category and its sub-categories. The parent
+  // must itself be a main category, and a category that already has
+  // sub-categories cannot move under another — so no chain, and no loop.
+  const parentId = String(formData.get("parent_id") ?? "").trim() || null;
+  if (parentId) {
+    if (parentId === id) {
+      return { ok: false, error: "A category cannot be its own parent." };
+    }
+    const [{ data: parent }, { count: ownChildren }] = await Promise.all([
+      db.from("categories").select("id, parent_id").eq("id", parentId).maybeSingle(),
+      id
+        ? db.from("categories").select("id", { count: "exact", head: true }).eq("parent_id", id)
+        : Promise.resolve({ count: 0 }),
+    ]);
+    if (!parent) return { ok: false, error: "That parent category no longer exists." };
+    if (parent.parent_id) {
+      return { ok: false, error: "Choose a main category as the parent, not a sub-category." };
+    }
+    if ((ownChildren ?? 0) > 0) {
+      return {
+        ok: false,
+        error: "This category has its own sub-categories, so it must stay a main category.",
+      };
+    }
+  }
+
   const row = {
     name: parsed.data.name,
     slug: parsed.data.slug || slugify(parsed.data.name),
+    parent_id: parentId,
     description: parsed.data.description || null,
     icon: parsed.data.icon || null,
     image_url: parsed.data.image_url || null,
@@ -480,8 +509,6 @@ export async function saveCategory(
     is_active: formData.get("is_active") === "on",
     is_featured: formData.get("is_featured") === "on",
   };
-
-  const db = createAdminClient();
 
   // Needed to tell whether a save renamed the category (see below).
   const { data: before } = id
@@ -509,6 +536,19 @@ export async function saveCategory(
 export async function deleteCategory(id: string): Promise<AdminState> {
   await requirePermission("categories");
   const db = createAdminClient();
+
+  // Sub-categories would silently become main categories (parent_id is ON
+  // DELETE SET NULL) and appear in the nav and homepage — say so instead.
+  const { count: children } = await db
+    .from("categories")
+    .select("id", { count: "exact", head: true })
+    .eq("parent_id", id);
+  if ((children ?? 0) > 0) {
+    return {
+      ok: false,
+      error: `${children} sub-${children === 1 ? "category is" : "categories are"} inside this one. Move or delete ${children === 1 ? "it" : "them"} first.`,
+    };
+  }
 
   // products.category_id is ON DELETE SET NULL, so the products survive — but
   // an operator deleting a category rarely means "orphan 40 products".

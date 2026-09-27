@@ -10,6 +10,7 @@ import {
   Tag,
   Flame,
   ChevronRight,
+  ChevronDown,
   Users,
   Truck,
   Handshake,
@@ -87,6 +88,12 @@ export function CategoryDrawer({
 }) {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"categories" | "navigation">("categories");
+  /** The main category whose sub-categories are showing, if any. */
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  // Main categories, and each one's sub-categories (already in position order).
+  const mains = categories.filter((c) => !c.parent_id);
+  const subsOf = (id: string) => categories.filter((c) => c.parent_id === id);
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
 
@@ -180,19 +187,72 @@ export function CategoryDrawer({
                 </Link>
               </li>
 
-              {categories.map((c) => (
-                <li key={c.id}>
-                  <Link
-                    href={`/products?category=${c.slug}`}
-                    onClick={close}
-                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-ink-soft hover:bg-surface-sunken hover:text-ink"
-                  >
-                    <Tag size={17} className="shrink-0 text-ink-faint" />
-                    <span className="flex-1 truncate">{c.name}</span>
-                    <ChevronRight size={15} className="shrink-0 text-ink-faint" />
-                  </Link>
-                </li>
-              ))}
+              {mains.map((c) => {
+                const subs = subsOf(c.id);
+
+                // No sub-categories: a plain link, as before.
+                if (subs.length === 0) {
+                  return (
+                    <li key={c.id}>
+                      <Link
+                        href={`/products?category=${c.slug}`}
+                        onClick={close}
+                        className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-ink-soft hover:bg-surface-sunken hover:text-ink"
+                      >
+                        <Tag size={17} className="shrink-0 text-ink-faint" />
+                        <span className="flex-1 truncate">{c.name}</span>
+                        <ChevronRight size={15} className="shrink-0 text-ink-faint" />
+                      </Link>
+                    </li>
+                  );
+                }
+
+                // With sub-categories: the row opens them in place.
+                const isOpen = expanded === c.id;
+                return (
+                  <li key={c.id}>
+                    <button
+                      type="button"
+                      onClick={() => setExpanded(isOpen ? null : c.id)}
+                      aria-expanded={isOpen}
+                      className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm hover:bg-surface-sunken ${
+                        isOpen ? "font-medium text-ink" : "text-ink-soft hover:text-ink"
+                      }`}
+                    >
+                      <Tag size={17} className="shrink-0 text-ink-faint" />
+                      <span className="flex-1 truncate">{c.name}</span>
+                      <ChevronDown
+                        size={15}
+                        className={`shrink-0 text-ink-faint transition-transform ${isOpen ? "" : "-rotate-90"}`}
+                      />
+                    </button>
+                    {isOpen ? (
+                      <ul className="mb-1 ml-5 border-l border-line pl-3">
+                        <li>
+                          <Link
+                            href={`/products?category=${c.slug}`}
+                            onClick={close}
+                            className="block rounded-lg px-3 py-2 text-sm font-medium text-brand-600 hover:bg-surface-sunken"
+                          >
+                            All {c.name}
+                          </Link>
+                        </li>
+                        {subs.map((s) => (
+                          <li key={s.id}>
+                            <Link
+                              href={`/products?category=${s.slug}`}
+                              onClick={close}
+                              className="block rounded-lg px-3 py-2 text-sm text-ink-soft hover:bg-surface-sunken hover:text-ink"
+                            >
+                              {s.name}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </li>
+                );
+              })}
 
               {/* Discounted stock, called out in red because it is the row
                   people open this drawer looking for. */}

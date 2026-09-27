@@ -53,7 +53,7 @@ export async function Header() {
       </div>
 
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4">
-        <CategoryDrawer categories={topLevel} signedIn={Boolean(user)} />
+        <CategoryDrawer categories={categories} signedIn={Boolean(user)} />
 
         <Link href="/" className="flex shrink-0 flex-col">
           <div className="flex items-baseline gap-1.5">
@@ -120,6 +120,7 @@ export async function Header() {
             <ul className="grid grid-cols-3 gap-1 lg:grid-cols-4 xl:grid-cols-5">
               {topLevel.map((c) => {
                 const Icon = categoryIcon(c.icon);
+                const subs = categories.filter((s) => s.parent_id === c.id);
                 return (
                   <li key={c.id}>
                     <Link
@@ -133,6 +134,20 @@ export async function Header() {
                           Appliances" should be readable in full. */}
                       <span className="min-w-0 leading-snug">{c.name}</span>
                     </Link>
+                    {subs.length > 0 ? (
+                      <ul className="mb-1 ml-[3.25rem] flex flex-wrap gap-x-2.5 gap-y-0.5">
+                        {subs.map((s) => (
+                          <li key={s.id}>
+                            <Link
+                              href={`/products?category=${s.slug}`}
+                              className="text-xs text-ink-muted hover:text-brand-700 hover:underline"
+                            >
+                              {s.name}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
                   </li>
                 );
               })}

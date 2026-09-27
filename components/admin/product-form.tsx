@@ -117,11 +117,16 @@ export function ProductForm({
                 defaultValue={product?.category_id ?? ""}
               >
                 <option value="">Uncategorised</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
+                {categories
+                  .filter((c) => !c.parent_id)
+                  .flatMap((m) => [m, ...categories.filter((c) => c.parent_id === m.id)])
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {/* Non-breaking spaces: browsers collapse ordinary leading spaces
+                          inside an <option>. */}
+                      {c.parent_id ? `\u00a0\u00a0\u00a0↳ ${c.name}` : c.name}
+                    </option>
+                  ))}
               </Select>
             </Field>
 

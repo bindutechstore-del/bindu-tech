@@ -41,6 +41,15 @@ export default async function ProductsPage({
   ).toString();
 
   const activeCategory = categories.find((c) => c.slug === query.category);
+  // For a main category: its sub-categories. For a sub-category: its
+  // siblings, so the shopper can hop across without going back.
+  const parentCategory = activeCategory?.parent_id
+    ? categories.find((c) => c.id === activeCategory.parent_id)
+    : undefined;
+  const chipParent = parentCategory ?? activeCategory;
+  const subCategories = chipParent
+    ? categories.filter((c) => c.parent_id === chipParent.id)
+    : [];
 
   const heading = query.q
     ? `Results for “${query.q}”`
@@ -56,6 +65,17 @@ export default async function ProductsPage({
         <Link href="/products" className="hover:text-brand-700">
           Products
         </Link>
+        {parentCategory ? (
+          <>
+            <span className="mx-1.5">/</span>
+            <Link
+              href={`/products?category=${parentCategory.slug}`}
+              className="hover:text-brand-700"
+            >
+              {parentCategory.name}
+            </Link>
+          </>
+        ) : null}
         {activeCategory ? (
           <>
             <span className="mx-1.5">/</span>
@@ -74,6 +94,28 @@ export default async function ProductsPage({
         </div>
         <SortSelect value={query.sort} />
       </div>
+
+      {chipParent && subCategories.length > 0 ? (
+        <div className="-mt-3 mb-6 flex flex-wrap gap-2">
+          {[chipParent, ...subCategories].map((c) => {
+            const on = c.id === activeCategory?.id;
+            return (
+              <Link
+                key={c.id}
+                href={`/products?category=${c.slug}`}
+                aria-current={on ? "page" : undefined}
+                className={`rounded-full border px-3 py-1.5 text-sm ${
+                  on
+                    ? "border-brand-600 bg-brand-600 text-white"
+                    : "border-line bg-surface text-ink-soft hover:border-brand-600 hover:text-brand-700"
+                }`}
+              >
+                {c.id === chipParent.id ? `All ${c.name}` : c.name}
+              </Link>
+            );
+          })}
+        </div>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
         <FilterPanel

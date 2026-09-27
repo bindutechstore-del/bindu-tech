@@ -142,6 +142,20 @@ SECTIONS = [
    "The tile falls back to its icon. No broken-image box anywhere."),
   ("C-014", "Try to upload a PDF or a text file as a category picture.",
    "Refused with 'use a JPG, PNG, WebP or AVIF picture'. Nothing is uploaded."),
+  ("C-015", "Create 'QA Earbuds' with Parent category = an existing main category "
+   "(e.g. Headphone & Earphone). Save.",
+   "In the list it appears indented under its parent, and the parent shows '1 sub'."),
+  ("C-016", "Put a product in 'QA Earbuds'. Open the parent category on the storefront.",
+   "The product is listed there too, and chips across the top offer 'All <parent>' "
+   "and 'QA Earbuds'. The product form's Category list shows it indented under its parent."),
+  ("C-017", "On a phone, open the menu and tap the parent category.",
+   "It opens in place to show 'All <parent>' and its sub-categories. On a computer, "
+   "the Categories panel lists the sub-categories under the parent."),
+  ("C-018", "Edit a sub-category and try to choose ANOTHER sub-category as its parent.",
+   "Not offered -- only main categories are listed as parents."),
+  ("C-019", "Try to delete the parent while it still has sub-categories.",
+   "Refused: move or delete the sub-categories first. Set 'QA Earbuds' back to "
+   "'None -- main category' (or delete it) and the parent can be deleted."),
   ("BR-001", "Open Brands. Note the brands and their product counts.",
    "Every brand listed, each with the number of products that use it."),
   ("BR-002", "Click 'New brand'. Name it 'QA Brand', leave the slug empty, press "
