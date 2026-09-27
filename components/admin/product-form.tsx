@@ -313,22 +313,26 @@ export function ProductForm({
           </Field>
 
           <div className="mt-4 space-y-2.5">
+            {/* Each tick puts the product in a homepage row, so say which. */}
             {[
-              ["is_featured", "Featured", product?.is_featured],
-              ["is_new_arrival", "New arrival", product?.is_new_arrival],
-              ["is_best_seller", "Best seller", product?.is_best_seller],
-            ].map(([name, label, checked]) => (
+              ["is_featured", "Featured", product?.is_featured, "Homepage “Handpicked for you”"],
+              ["is_new_arrival", "New arrival", product?.is_new_arrival, "Homepage “New arrivals” row, and a New badge"],
+              ["is_best_seller", "Best seller", product?.is_best_seller, "Homepage “Best sellers” row, most sold first"],
+            ].map(([name, label, checked, hint]) => (
               <label
                 key={String(name)}
-                className="flex items-center gap-2 text-sm text-ink-soft"
+                className="flex items-start gap-2 text-sm text-ink-soft"
               >
                 <input
                   type="checkbox"
                   name={String(name)}
                   defaultChecked={Boolean(checked)}
-                  className="size-4 accent-brand-600"
+                  className="mt-0.5 size-4 accent-brand-600"
                 />
-                {String(label)}
+                <span>
+                  {String(label)}
+                  <span className="block text-[11px] text-ink-faint">{String(hint)}</span>
+                </span>
               </label>
             ))}
           </div>

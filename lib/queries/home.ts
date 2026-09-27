@@ -75,32 +75,75 @@ export const getTopCategories = cache(async (): Promise<Category[]> => {
 });
 
 /**
- * One query for all three rails instead of three.
+ * The three homepage rails, each following the tick the admin sets on the
+ * product ("New arrival", "Featured", "Best seller").
  *
- * Featured, new arrivals and best sellers overlap heavily, so fetching them
- * separately pulled the same rows across the wire more than once. Pull a
- * single recent window and slice it in memory — one round trip, and the rails
- * stay consistent with each other.
+ * This used to be one query for the 40 most recently published products,
+ * sliced in memory. That ignored the ticks entirely: "New arrivals" was just
+ * the 12 newest — and since the catalogue import gave most products the same
+ * publish time, effectively an arbitrary 12 in no guaranteed order, while a
+ * product ticked "New arrival" could be missing. Best sellers and Featured
+ * could only ever come from that window of 40.
+ *
+ * Three small queries in parallel, each served by an existing partial index
+ * (products_active_published_idx, products_featured_idx,
+ * products_best_sellers_idx), each with a unique tie-breaker so the order is
+ * stable. When the admin has ticked nothing for a rail, it falls back to the
+ * newest / most-sold products so a new shop's homepage is not empty.
  */
 export const getRailProducts = cache(async () => {
   const supabase = await createClient();
+  const base = () =>
+    supabase.from("products").select(PRODUCT_CARD_COLUMNS).eq("status", "active");
 
-  const { data } = await supabase
-    .from("products")
-    .select(PRODUCT_CARD_COLUMNS)
-    .eq("status", "active")
-    .order("published_at", { ascending: false, nullsFirst: false })
-    .limit(40);
+  const [newRes, featuredRes, bestRes] = await Promise.all([
+    base()
+      .eq("is_new_arrival", true)
+      .order("published_at", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false })
+      .order("id")
+      .limit(12),
+    base()
+      .eq("is_featured", true)
+      .order("published_at", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false })
+      .order("id")
+      .limit(8),
+    base()
+      .eq("is_best_seller", true)
+      .order("units_sold", { ascending: false })
+      .order("id")
+      .limit(8),
+  ]);
 
-  const all = (data as unknown as ProductCard[]) ?? [];
+  let newArrivals = (newRes.data as unknown as ProductCard[]) ?? [];
+  const featured = (featuredRes.data as unknown as ProductCard[]) ?? [];
+  let bestSellers = (bestRes.data as unknown as ProductCard[]) ?? [];
+  const newArrivalsTicked = newArrivals.length > 0;
+
+  // Fallbacks, only when nothing is ticked for that rail.
+  const [fallbackNew, fallbackBest] = await Promise.all([
+    newArrivalsTicked
+      ? null
+      : base()
+          .order("published_at", { ascending: false, nullsFirst: false })
+          .order("created_at", { ascending: false })
+          .order("id")
+          .limit(12),
+    bestSellers.length > 0
+      ? null
+      : base().gt("units_sold", 0).order("units_sold", { ascending: false }).order("id").limit(8),
+  ]);
+  if (fallbackNew) newArrivals = (fallbackNew.data as unknown as ProductCard[]) ?? [];
+  if (fallbackBest) bestSellers = (fallbackBest.data as unknown as ProductCard[]) ?? [];
 
   return {
-    newArrivals: all.slice(0, 12),
-    featured: all.filter((p) => p.is_featured).slice(0, 8),
-    bestSellers: [...all]
-      .sort((a, b) => b.units_sold - a.units_sold)
-      .slice(0, 8),
-    hasAny: all.length > 0,
+    newArrivals,
+    /** True when the rail shows ticked products (so "See all" can filter). */
+    newArrivalsTicked,
+    featured,
+    bestSellers,
+    hasAny: newArrivals.length > 0 || featured.length > 0 || bestSellers.length > 0,
   };
 });
 

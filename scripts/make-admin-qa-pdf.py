@@ -240,6 +240,17 @@ SECTIONS = [
    "'Earn 50 points when this order is delivered' appears (doubles to 100 for 2 units)."),
   ("P-018", "Set Reward points back to 0 and reload the product page.",
    "The points line disappears entirely."),
+  ("P-018a", "Tick 'New arrival' on a product and save. Open the homepage.",
+   "It appears in the 'New arrivals' row. The row shows ONLY products ticked 'New "
+   "arrival', newest first, and the same list every time you reload."),
+  ("P-018b", "Press 'See all' on the New arrivals row.",
+   "A page titled 'New arrivals' listing exactly the ticked products."),
+  ("P-018c", "Untick 'New arrival' on that product and save.",
+   "It leaves the row. (If NO product is ticked at all, the row shows the most "
+   "recently published products instead, so the homepage is never empty.)"),
+  ("P-018d", "Tick 'Best seller' / 'Featured' on a product.",
+   "It joins the homepage 'Best sellers' row (ordered by units sold) / "
+   "'Handpicked for you' grid."),
   ("P-019", "Set the product status to Draft.",
    "Gone from the storefront listing and search. Its URL no longer shows it for shoppers."),
   ("P-020", "Set it back to Active.",

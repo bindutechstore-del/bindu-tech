@@ -143,6 +143,7 @@ export async function listProducts(
   // `compare_at_paisa is null or compare_at_paisa > price_paisa`, so there is
   // nothing to re-check in memory and `count` stays exact.
   if (query.on_sale === "1") q = q.not("compare_at_paisa", "is", null);
+  if (query.new === "1") q = q.eq("is_new_arrival", true);
 
   switch (query.sort) {
     case "price_asc":
@@ -162,8 +163,15 @@ export async function listProducts(
     case "relevance":
     case "newest":
     default:
-      q = q.order("published_at", { ascending: false, nullsFirst: false });
+      q = q
+        .order("published_at", { ascending: false, nullsFirst: false })
+        .order("created_at", { ascending: false });
   }
+  // A unique last sort key. Pages are cut by offset, and without one, rows
+  // that tie on the sort (most products share one publish time from the
+  // catalogue import; many have the same price or 0 sold) come back in any
+  // order — so page 2 / "load more" could repeat some and skip others.
+  q = q.order("id");
 
   const { data, count } = await q.range(from, from + PAGE_SIZE - 1);
 

@@ -231,7 +231,8 @@ async function RailsBlock({
         <Section
           title="New arrivals"
           subtitle="Fresh stock, just published."
-          href="/products?sort=newest"
+          // "See all" lists exactly the ticked products the rail is showing.
+          href={rails.newArrivalsTicked ? "/products?new=1" : "/products?sort=newest"}
         >
           <ProductRail products={rails.newArrivals} />
         </Section>

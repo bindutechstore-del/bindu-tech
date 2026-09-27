@@ -44,7 +44,7 @@ export default async function ProductsPage({
 
   const heading = query.q
     ? `Results for “${query.q}”`
-    : (activeCategory?.name ?? "All products");
+    : (activeCategory?.name ?? (query.new === "1" ? "New arrivals" : "All products"));
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
