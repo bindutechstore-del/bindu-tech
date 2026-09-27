@@ -121,6 +121,14 @@ SECTIONS = [
    "Gone from the nav bar, the drawer and the homepage grid. Still listed in admin."),
   ("C-009", "Open the storefront drawer (Categories button) and count the rows.",
    "Every active category appears, each with a tag icon, plus the red Sale row."),
+  ("C-009a", "On a laptop or desktop, look at the category bar under the search box.",
+   "One tidy line: whole category names only, no scrollbar, a 'More +N' button when "
+   "some do not fit, and Track on the right. Narrowing the window moves more names "
+   "into More."),
+  ("C-009b", "Click 'Categories' (or 'More') in that bar.",
+   "A panel opens with EVERY active category in a grid, plus All products and On sale. "
+   "Choosing one opens it and closes the panel; Escape or a click outside closes it. "
+   "Change a category's position and the bar's order follows."),
   ("C-010", "Delete 'QA Test Category' while it has no products.",
    "Deleted. It disappears from admin and the storefront."),
   ("C-011", "Assign a product to a category, then try to delete that category "

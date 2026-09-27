@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { Phone, Heart, Package } from "lucide-react";
+import { Phone, Heart, Package, Percent, ArrowRight, type LucideIcon } from "lucide-react";
+import * as Icons from "lucide-react";
 import { getCategories } from "@/lib/queries/catalog";
 import { getStoreSettings } from "@/lib/queries/settings";
 import { getCartQuote } from "@/lib/actions/cart";
@@ -9,6 +10,12 @@ import { SearchBox } from "./search-box";
 import { CartButton } from "./cart-button";
 import { CategoryDrawer } from "./category-drawer";
 import { AccountMenu } from "./account-menu";
+import { CategoryBar } from "./category-bar";
+
+/** A category's icon by its stored Lucide name; unknown names fall back. */
+function categoryIcon(name: string | null): LucideIcon {
+  return (name && (Icons as unknown as Record<string, LucideIcon>)[name]) || Icons.Tag;
+}
 
 export async function Header() {
   const [categories, settings, quote, user] = await Promise.all([
@@ -88,25 +95,52 @@ export async function Header() {
         <SearchBox />
       </div>
 
-      <nav className="hidden border-t border-line md:block">
-        <div className="mx-auto flex h-11 max-w-7xl items-center gap-1 overflow-x-auto px-4">
-          <CategoryDrawer categories={topLevel} signedIn={Boolean(user)} variant="bar" />
-          <Link
-            href="/products"
-            className="shrink-0 rounded-md px-3 py-1.5 text-sm font-medium text-ink hover:bg-surface-sunken"
-          >
-            All products
-          </Link>
-          {topLevel.map((c) => (
-            <Link
-              key={c.id}
-              href={`/products?category=${c.slug}`}
-              className="shrink-0 rounded-md px-3 py-1.5 text-sm text-ink-soft hover:bg-surface-sunken hover:text-ink"
-            >
-              {c.name}
-            </Link>
-          ))}
-          <div className="ml-auto flex shrink-0 items-center gap-1">
+      <CategoryBar
+        panel={
+          <div>
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              <Link
+                href="/products"
+                className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-sm font-medium text-ink hover:border-brand-600 hover:text-brand-700"
+              >
+                All products
+                <ArrowRight size={14} />
+              </Link>
+              <Link
+                href="/products?on_sale=1"
+                className="inline-flex items-center gap-1.5 rounded-full border border-danger/30 bg-danger-soft px-3 py-1.5 text-sm font-medium text-danger hover:border-danger"
+              >
+                <Percent size={14} />
+                On sale
+              </Link>
+              <span className="ml-auto text-xs text-ink-faint">
+                {topLevel.length} categories
+              </span>
+            </div>
+            <ul className="grid grid-cols-3 gap-1 lg:grid-cols-4 xl:grid-cols-5">
+              {topLevel.map((c) => {
+                const Icon = categoryIcon(c.icon);
+                return (
+                  <li key={c.id}>
+                    <Link
+                      href={`/products?category=${c.slug}`}
+                      className="group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-ink-soft hover:bg-surface-sunken hover:text-ink"
+                    >
+                      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600 transition-colors group-hover:bg-brand-600 group-hover:text-white">
+                        <Icon size={16} />
+                      </span>
+                      {/* Wraps rather than truncates: "Kitchen and Home
+                          Appliances" should be readable in full. */}
+                      <span className="min-w-0 leading-snug">{c.name}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        }
+        trailing={
+          <>
             {isStaffRole(user?.role) ? (
               <Link
                 href="/admin"
@@ -122,9 +156,25 @@ export async function Header() {
               <Package size={15} />
               Track
             </Link>
-          </div>
-        </div>
-      </nav>
+          </>
+        }
+      >
+        <Link
+          href="/products"
+          className="inline-flex h-8 shrink-0 items-center rounded-md px-3 text-sm font-medium text-ink hover:bg-surface-sunken"
+        >
+          All products
+        </Link>
+        {topLevel.map((c) => (
+          <Link
+            key={c.id}
+            href={`/products?category=${c.slug}`}
+            className="inline-flex h-8 shrink-0 items-center rounded-md px-3 text-sm text-ink-soft hover:bg-surface-sunken hover:text-ink"
+          >
+            {c.name}
+          </Link>
+        ))}
+      </CategoryBar>
     </header>
   );
 }
