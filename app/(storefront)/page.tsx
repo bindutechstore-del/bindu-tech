@@ -163,7 +163,7 @@ async function CategoriesSection() {
       subtitle="Everything we stock, sorted the way you actually shop."
       href="/categories"
     >
-      <CategoryGrid categories={categories} oneRowOnMobile />
+      <CategoryGrid categories={categories} oneRow />
     </Section>
   );
 }

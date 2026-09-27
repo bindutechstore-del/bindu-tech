@@ -94,23 +94,25 @@ export function ProductRail({ products }: { products: ProductCardData[] }) {
  */
 export function CategoryGrid({
   categories,
-  oneRowOnMobile = false,
+  oneRow = false,
 }: {
   categories: Category[];
   /**
-   * Homepage: on a phone, one row of four and "See all" for the rest. Twelve
-   * tiles in threes made four rows — a full screen of scrolling before the
-   * first product.
+   * Homepage: exactly one row at every screen size — four tiles on phones and
+   * tablets, six on a computer — with "See all" for the rest. Twelve tiles
+   * used to fill two rows on a computer and four on a phone before the first
+   * product.
    */
-  oneRowOnMobile?: boolean;
+  oneRow?: boolean;
 }) {
+  const shown = oneRow ? categories.slice(0, 6) : categories;
   return (
     <div
       className={`grid sm:grid-cols-4 sm:gap-3 lg:grid-cols-6 ${
-        oneRowOnMobile ? "grid-cols-4 gap-2" : "grid-cols-3 gap-3"
+        oneRow ? "grid-cols-4 gap-2" : "grid-cols-3 gap-3"
       }`}
     >
-      {categories.map((c, i) => {
+      {shown.map((c, i) => {
         const Icon =
           (c.icon && (Icons as unknown as Record<string, LucideIcon>)[c.icon]) ||
           Icons.Package;
@@ -120,8 +122,8 @@ export function CategoryGrid({
             key={c.id}
             href={`/products?category=${c.slug}`}
             className={`group flex flex-col items-center gap-2 rounded-xl border border-line bg-surface p-4 text-center transition-all hover:border-brand-200 hover:shadow-lift ${
-              oneRowOnMobile ? "max-sm:p-2 max-sm:gap-1.5" : ""
-            } ${oneRowOnMobile && i >= 4 ? "max-sm:hidden" : ""}`}
+              oneRow ? "max-sm:p-2 max-sm:gap-1.5" : ""
+            } ${oneRow && i >= 4 ? "max-lg:hidden" : ""}`}
           >
             <span className="flex size-12 items-center justify-center rounded-full bg-brand-50 text-brand-600 transition-colors group-hover:bg-brand-600 group-hover:text-white">
               {c.image_url ? (

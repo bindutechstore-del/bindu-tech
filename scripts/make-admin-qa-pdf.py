@@ -142,9 +142,9 @@ SECTIONS = [
    "The tile falls back to its icon. No broken-image box anywhere."),
   ("C-014", "Try to upload a PDF or a text file as a category picture.",
    "Refused with 'use a JPG, PNG, WebP or AVIF picture'. Nothing is uploaded."),
-  ("C-014a", "On a phone, open the homepage.",
-   "'Shop by category' is ONE row of four tiles. 'See all' opens an All categories page "
-   "with every category."),
+  ("C-014a", "Open the homepage on a computer, then on a phone.",
+   "'Shop by category' is ONE row either way -- six tiles on a computer, four on a "
+   "phone or tablet. 'See all' opens an All categories page with every category."),
   ("C-015", "Create 'QA Earbuds' with Parent category = an existing main category "
    "(e.g. Headphone & Earphone). Save.",
    "In the list it appears indented under its parent, and the parent shows '1 sub'."),
