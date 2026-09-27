@@ -142,6 +142,9 @@ SECTIONS = [
    "The tile falls back to its icon. No broken-image box anywhere."),
   ("C-014", "Try to upload a PDF or a text file as a category picture.",
    "Refused with 'use a JPG, PNG, WebP or AVIF picture'. Nothing is uploaded."),
+  ("C-014a", "On a phone, open the homepage.",
+   "'Shop by category' is ONE row of four tiles. 'See all' opens an All categories page "
+   "with every category."),
   ("C-015", "Create 'QA Earbuds' with Parent category = an existing main category "
    "(e.g. Headphone & Earphone). Save.",
    "In the list it appears indented under its parent, and the parent shows '1 sub'."),
@@ -481,6 +484,18 @@ SECTIONS = [
    "Rejected. A bundle needs at least two."),
   ("R-014", "Delete a quantity break and a bundle.",
    "Both disappear from admin and stop applying in the cart."),
+  ("R-015", "At the top of Promotions, open the old 'Weekend flash sale' (it shows Ended). "
+   "Set Ends to a time later today (Bangladesh time) and save.",
+   "It now shows 'Live now'. The homepage shows the Flash sale row with a countdown to "
+   "that time, and its products at the sale price."),
+  ("R-016", "In the sale, search a product, enter a sale price BELOW its price and 10 units. Add.",
+   "It is listed with the discount %. Adding it to the cart charges the sale price."),
+  ("R-017", "Try a sale price equal to or above the product's normal price.",
+   "Refused: the sale price must be below the regular price."),
+  ("R-018", "Create a 'New flash sale' starting tomorrow.",
+   "Listed as 'Scheduled'; nothing changes on the storefront until it starts."),
+  ("R-019", "Untick 'Switched on' on the live sale and save.",
+   "Status 'Switched off'. The homepage row and countdown disappear; normal prices apply."),
  ],
 ),
 (

@@ -92,10 +92,25 @@ export function ProductRail({ products }: { products: ProductCardData[] }) {
  * Category tiles. `icon` is a Lucide name stored on the row, so an admin can
  * change the icon without a deploy. Unknown names fall back rather than crash.
  */
-export function CategoryGrid({ categories }: { categories: Category[] }) {
+export function CategoryGrid({
+  categories,
+  oneRowOnMobile = false,
+}: {
+  categories: Category[];
+  /**
+   * Homepage: on a phone, one row of four and "See all" for the rest. Twelve
+   * tiles in threes made four rows — a full screen of scrolling before the
+   * first product.
+   */
+  oneRowOnMobile?: boolean;
+}) {
   return (
-    <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
-      {categories.map((c) => {
+    <div
+      className={`grid sm:grid-cols-4 sm:gap-3 lg:grid-cols-6 ${
+        oneRowOnMobile ? "grid-cols-4 gap-2" : "grid-cols-3 gap-3"
+      }`}
+    >
+      {categories.map((c, i) => {
         const Icon =
           (c.icon && (Icons as unknown as Record<string, LucideIcon>)[c.icon]) ||
           Icons.Package;
@@ -104,7 +119,9 @@ export function CategoryGrid({ categories }: { categories: Category[] }) {
           <Link
             key={c.id}
             href={`/products?category=${c.slug}`}
-            className="group flex flex-col items-center gap-2 rounded-xl border border-line bg-surface p-4 text-center transition-all hover:border-brand-200 hover:shadow-lift"
+            className={`group flex flex-col items-center gap-2 rounded-xl border border-line bg-surface p-4 text-center transition-all hover:border-brand-200 hover:shadow-lift ${
+              oneRowOnMobile ? "max-sm:p-2 max-sm:gap-1.5" : ""
+            } ${oneRowOnMobile && i >= 4 ? "max-sm:hidden" : ""}`}
           >
             <span className="flex size-12 items-center justify-center rounded-full bg-brand-50 text-brand-600 transition-colors group-hover:bg-brand-600 group-hover:text-white">
               {c.image_url ? (

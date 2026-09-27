@@ -161,9 +161,9 @@ async function CategoriesSection() {
     <Section
       title="Shop by category"
       subtitle="Everything we stock, sorted the way you actually shop."
-      href="/products"
+      href="/categories"
     >
-      <CategoryGrid categories={categories} />
+      <CategoryGrid categories={categories} oneRowOnMobile />
     </Section>
   );
 }

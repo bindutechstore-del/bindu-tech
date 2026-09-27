@@ -1391,6 +1391,133 @@ export async function resetSiteTheme(): Promise<AdminState> {
 // ── Promotions ──────────────────────────────────────────────────────────────
 
 
+// ── Flash sales (the homepage countdown) ────────────────────────────────────
+// The storefront and SQL already handle a live sale: FlashSaleSection shows it
+// with a countdown, and effective_price() charges the sale price inside the
+// window until stock_limit is reached. What was missing was any way for the
+// admin to create one — the seeded sale ended and the countdown vanished.
+
+/** "2026-09-28T20:00" typed in Bangladesh time (UTC+6, no DST) → ISO. */
+function dhakaInputToIso(v: string): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(v)) return null;
+  const d = new Date(`${v}:00+06:00`);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+export type FlashSaleState = AdminState & { id?: string };
+
+export async function saveFlashSale(
+  _prev: FlashSaleState,
+  formData: FormData,
+): Promise<FlashSaleState> {
+  await requirePermission("coupons");
+
+  const id = String(formData.get("id") ?? "");
+  const title = String(formData.get("title") ?? "").trim();
+  const subtitle = String(formData.get("subtitle") ?? "").trim();
+  const starts = dhakaInputToIso(String(formData.get("starts_at") ?? ""));
+  const ends = dhakaInputToIso(String(formData.get("ends_at") ?? ""));
+
+  const fieldErrors: Record<string, string> = {};
+  if (title.length < 2 || title.length > 80) fieldErrors.title = "2–80 characters.";
+  if (subtitle.length > 120) fieldErrors.subtitle = "Keep it under 120 characters.";
+  if (!starts) fieldErrors.starts_at = "Pick a start date and time.";
+  if (!ends) fieldErrors.ends_at = "Pick an end date and time.";
+  if (starts && ends && ends <= starts) fieldErrors.ends_at = "Must be after the start.";
+  if (Object.keys(fieldErrors).length) {
+    return { ok: false, error: "Check the fields.", fieldErrors };
+  }
+
+  const row = {
+    title,
+    subtitle: subtitle || null,
+    starts_at: starts!,
+    ends_at: ends!,
+    is_active: formData.get("is_active") === "on",
+  };
+
+  const db = createAdminClient();
+  const { data, error } = id
+    ? await db.from("flash_sales").update(row).eq("id", id).select("id").single()
+    : await db.from("flash_sales").insert(row).select("id").single();
+  if (error || !data) return { ok: false, error: "Could not save the flash sale." };
+
+  revalidatePath("/admin/promotions");
+  revalidatePath("/", "layout");
+  return { ok: true, message: id ? "Flash sale updated." : "Flash sale created — now add products.", id: data.id };
+}
+
+export async function deleteFlashSale(id: string): Promise<AdminState> {
+  await requirePermission("coupons");
+  const db = createAdminClient();
+  // Items cascade. Past orders keep their own prices.
+  const { error } = await db.from("flash_sales").delete().eq("id", id);
+  if (error) return { ok: false, error: "Could not delete the flash sale." };
+  revalidatePath("/admin/promotions");
+  revalidatePath("/", "layout");
+  return { ok: true, message: "Flash sale deleted." };
+}
+
+/** Add a product to a sale, or change its sale price / limit if already in. */
+export async function saveFlashSaleItem(input: {
+  saleId: string;
+  productId: string;
+  salePriceTaka: number;
+  stockLimit: number | null;
+}): Promise<AdminState> {
+  await requirePermission("coupons");
+  const db = createAdminClient();
+
+  const { data: product } = await db
+    .from("products")
+    .select("id, price_paisa, status")
+    .eq("id", input.productId)
+    .maybeSingle();
+  if (!product) return { ok: false, error: "That product no longer exists." };
+
+  const salePaisa = takaToPaisa(String(input.salePriceTaka));
+  if (!Number.isFinite(salePaisa) || salePaisa <= 0) {
+    return { ok: false, error: "Enter a sale price above ৳0." };
+  }
+  // effective_price() ignores a "sale" price that is not below the regular
+  // one, so accepting it would show a flash-sale badge with no saving.
+  if (salePaisa >= product.price_paisa) {
+    return { ok: false, error: "The sale price must be below the product's regular price." };
+  }
+  const limit = input.stockLimit;
+  if (limit !== null && (!Number.isInteger(limit) || limit < 1 || limit > 100000)) {
+    return { ok: false, error: "Units for the sale: a whole number, or leave it empty for no limit." };
+  }
+
+  const { error } = await db.from("flash_sale_items").upsert(
+    {
+      flash_sale_id: input.saleId,
+      product_id: input.productId,
+      sale_price_paisa: salePaisa,
+      stock_limit: limit,
+    },
+    { onConflict: "flash_sale_id,product_id" },
+  );
+  if (error) return { ok: false, error: "Could not add the product to the sale." };
+
+  revalidatePath("/admin/promotions");
+  revalidatePath("/", "layout");
+  return {
+    ok: true,
+    message: product.status === "active" ? "Added to the sale." : "Added — but the product is not active, so shoppers will not see it.",
+  };
+}
+
+export async function removeFlashSaleItem(itemId: string): Promise<AdminState> {
+  await requirePermission("coupons");
+  const db = createAdminClient();
+  const { error } = await db.from("flash_sale_items").delete().eq("id", itemId);
+  if (error) return { ok: false, error: "Could not remove that product." };
+  revalidatePath("/admin/promotions");
+  revalidatePath("/", "layout");
+  return { ok: true, message: "Removed from the sale." };
+}
+
 export interface PromotionProduct {
   id: string;
   name: string;
