@@ -130,26 +130,37 @@ export async function Footer() {
         <div>
           <h3 className="text-sm font-semibold text-ink">Talk to us</h3>
           <ul className="mt-3 space-y-3 text-sm text-ink-muted">
-            <li className="flex gap-2">
-              <Phone size={15} className="mt-0.5 shrink-0 text-ink-faint" />
-              <a href={`tel:${settings.support_phone}`} className="hover:text-brand-700">
-                {settings.support_phone}
-              </a>
-            </li>
-            <li className="flex gap-2">
-              <Mail size={15} className="mt-0.5 shrink-0 text-ink-faint" />
-              <a href={`mailto:${settings.support_email}`} className="hover:text-brand-700">
-                {settings.support_email}
-              </a>
-            </li>
-            <li className="flex gap-2">
-              <Clock size={15} className="mt-0.5 shrink-0 text-ink-faint" />
-              <span>{settings.support_hours}</span>
-            </li>
-            <li className="flex gap-2">
-              <MapPin size={15} className="mt-0.5 shrink-0 text-ink-faint" />
-              <span>{settings.showroom_address}</span>
-            </li>
+            {/* Each line only when Settings has something to put on it. The
+                email line needs a real address: "bindutech.com" made a
+                mailto: link that opened an email to nobody. */}
+            {settings.support_phone ? (
+              <li className="flex gap-2">
+                <Phone size={15} className="mt-0.5 shrink-0 text-ink-faint" />
+                <a href={`tel:${settings.support_phone}`} className="hover:text-brand-700">
+                  {settings.support_phone}
+                </a>
+              </li>
+            ) : null}
+            {settings.support_email.includes("@") ? (
+              <li className="flex gap-2">
+                <Mail size={15} className="mt-0.5 shrink-0 text-ink-faint" />
+                <a href={`mailto:${settings.support_email}`} className="hover:text-brand-700">
+                  {settings.support_email}
+                </a>
+              </li>
+            ) : null}
+            {settings.support_hours ? (
+              <li className="flex gap-2">
+                <Clock size={15} className="mt-0.5 shrink-0 text-ink-faint" />
+                <span>{settings.support_hours}</span>
+              </li>
+            ) : null}
+            {settings.showroom_address.trim() ? (
+              <li className="flex gap-2">
+                <MapPin size={15} className="mt-0.5 shrink-0 text-ink-faint" />
+                <span>{settings.showroom_address}</span>
+              </li>
+            ) : null}
           </ul>
         </div>
       </div>

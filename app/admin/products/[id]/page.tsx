@@ -4,6 +4,7 @@ import { ArrowLeft, ExternalLink } from "lucide-react";
 import { requirePermission } from "@/lib/auth/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ProductForm } from "@/components/admin/product-form";
+import { DeleteProductButton } from "@/components/admin/delete-product-button";
 import { PageHeader } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
 import type { Brand, Category, ProductAdmin } from "@/types/database";
@@ -48,14 +49,17 @@ export default async function EditProductPage({
         title={p.name}
         description={`SKU ${p.sku} · ${p.units_sold} sold`}
         actions={
-          p.status === "active" ? (
-            <Button asChild variant="outline" size="sm">
-              <Link href={`/products/${p.slug}`} target="_blank">
-                View live
-                <ExternalLink size={14} />
-              </Link>
-            </Button>
-          ) : undefined
+          <div className="flex flex-wrap gap-2">
+            {p.status === "active" ? (
+              <Button asChild variant="outline" size="sm">
+                <Link href={`/products/${p.slug}`} target="_blank">
+                  View live
+                  <ExternalLink size={14} />
+                </Link>
+              </Button>
+            ) : null}
+            <DeleteProductButton id={p.id} name={p.name} variant="button" />
+          </div>
         }
       />
 

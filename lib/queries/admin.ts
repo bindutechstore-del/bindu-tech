@@ -101,6 +101,12 @@ export interface MonthlyMargin {
   grossMarginPaisa: number;
   /** True when the month exceeded the cap and the figure is partial. */
   truncated: boolean;
+  /**
+   * Lines left out because their product was deleted: order lines keep the
+   * price they sold at but not the cost, so counting them would add their
+   * whole revenue to the margin.
+   */
+  excludedLines: number;
 }
 
 /**
@@ -145,12 +151,17 @@ export const getMonthlyMargin = cache(async (): Promise<MonthlyMargin> => {
     ]),
   );
 
+  let excludedLines = 0;
   const grossMarginPaisa = lines.reduce((sum, l) => {
-    const cost = (costById.get(l.product_id ?? "") ?? 0) * l.quantity;
+    if (!l.product_id || !costById.has(l.product_id)) {
+      excludedLines += 1;
+      return sum;
+    }
+    const cost = (costById.get(l.product_id) ?? 0) * l.quantity;
     return sum + (l.line_total_paisa - cost);
   }, 0);
 
-  return { grossMarginPaisa, truncated: lines.length >= MARGIN_LINE_CAP };
+  return { grossMarginPaisa, truncated: lines.length >= MARGIN_LINE_CAP, excludedLines };
 });
 
 /** Daily revenue for the dashboard chart. Bounded by design — 30 points max. */

@@ -8,6 +8,12 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireStaff, requireAdmin, requirePermission } from "@/lib/auth/session";
 import { takaToPaisa } from "@/lib/utils/money";
 import { isManualSubmission } from "@/lib/payments/manual";
+import {
+  HIGHLIGHT_BODY_MAX,
+  HIGHLIGHT_SLOTS,
+  HIGHLIGHT_TITLE_MAX,
+  sanitiseHighlights,
+} from "@/lib/content/highlights";
 import type { OrderStatus } from "@/types/database";
 import {
   sanitiseTheme,
@@ -302,6 +308,122 @@ export async function setProductStatus(
 /** Archive rather than delete — order_items reference products by id. */
 export async function archiveProduct(id: string): Promise<AdminState> {
   return setProductStatus(id, "archived");
+}
+
+/**
+ * The storage path of a picture in the product-images bucket, or null for
+ * anything else (another bucket, images.unsplash.com, a malformed URL).
+ */
+function productImagePath(url: string): string | null {
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!base) return null;
+  const prefix = `${base.replace(/\/+$/, "")}/storage/v1/object/public/product-images/`;
+  if (!url.startsWith(prefix)) return null;
+  const path = decodeURIComponent(url.slice(prefix.length).split("?")[0]);
+  return path && !path.includes("..") ? path : null;
+}
+
+/**
+ * Delete a product for good.
+ *
+ * Archiving hides a product and can be undone; this cannot. What goes with
+ * it is decided by the foreign keys: its gallery, variants, reviews, carts,
+ * wishlists, flash-sale slots, quantity rules and bundle memberships all
+ * cascade. Past ORDERS do not: order_items is `on delete set null` and keeps
+ * its own snapshot of the name, SKU, price and picture, so every invoice
+ * still reads exactly as it did.
+ *
+ * The picture files are removed from storage too — the free tier has 1 GB —
+ * except any file another product still shows or an order line still points
+ * at, since the order snapshot stores the picture's URL, not a copy.
+ *
+ * Bundles that contain the product are deleted with it. The cascade would
+ * otherwise remove just this product from the bundle, and quote_cart would
+ * then award the bundle's discount to the product(s) left in it — "Phone +
+ * Case, 15% off" silently becoming "Phone, 15% off".
+ */
+export async function deleteProduct(id: string): Promise<AdminState> {
+  await requirePermission("products");
+  const db = createAdminClient();
+
+  const [{ data: product }, { data: gallery }, { data: memberships, error: bundleError }] =
+    await Promise.all([
+      db.from("products").select("id, name, thumbnail_url").eq("id", id).maybeSingle(),
+      db.from("product_images").select("url").eq("product_id", id),
+      db.from("bundle_items").select("bundle_id").eq("product_id", id),
+    ]);
+  if (!product) return { ok: false, error: "That product no longer exists." };
+  if (bundleError) return { ok: false, error: "Could not check its bundles. Try again." };
+
+  const bundleIds = [
+    ...new Set(((memberships ?? []) as { bundle_id: string }[]).map((m) => m.bundle_id)),
+  ];
+  let removedBundles: string[] = [];
+  if (bundleIds.length > 0) {
+    const { data: gone, error } = await db
+      .from("bundles")
+      .delete()
+      .in("id", bundleIds)
+      .select("name");
+    // Refuse rather than delete the product and leave a discount leaking.
+    if (error) return { ok: false, error: "Could not remove its bundles, so nothing was deleted." };
+    removedBundles = ((gone ?? []) as { name: string }[]).map((b) => b.name);
+  }
+
+  const urls = [
+    ...new Set(
+      [product.thumbnail_url, ...((gallery ?? []) as { url: string }[]).map((g) => g.url)].filter(
+        (u): u is string => Boolean(u),
+      ),
+    ),
+  ];
+
+  const { error } = await db.from("products").delete().eq("id", id);
+  if (error) {
+    return { ok: false, error: "Could not delete the product. Archive it instead." };
+  }
+
+  // Best effort, after the row is gone: a leftover file costs a few hundred
+  // KB, a failed delete of the product would cost the operator a retry. And
+  // fail CLOSED: if any "is this file still used?" check errors, keep every
+  // file — deleting one an old order still shows would break that invoice.
+  const owned = urls.filter((u) => productImagePath(u));
+  if (owned.length > 0) {
+    const [thumbsRes, galleryRes, linesRes, variantsRes] = await Promise.all([
+      db.from("products").select("thumbnail_url").in("thumbnail_url", owned),
+      db.from("product_images").select("url").in("url", owned),
+      db.from("order_items").select("image_url").in("image_url", owned),
+      db.from("product_variants").select("image_url").in("image_url", owned),
+    ]);
+    const checksOk = [thumbsRes, galleryRes, linesRes, variantsRes].every((r) => !r.error);
+    const otherThumbs = thumbsRes.data;
+    const otherGallery = galleryRes.data;
+    const orderLines = linesRes.data;
+    const stillUsed = new Set<string>([
+      ...((otherThumbs ?? []) as { thumbnail_url: string }[]).map((r) => r.thumbnail_url),
+      ...((otherGallery ?? []) as { url: string }[]).map((r) => r.url),
+      ...((orderLines ?? []) as { image_url: string }[]).map((r) => r.image_url),
+      ...((variantsRes.data ?? []) as { image_url: string }[]).map((r) => r.image_url),
+    ]);
+    const paths = (checksOk ? owned : [])
+      .filter((u) => !stillUsed.has(u))
+      .map(productImagePath)
+      .filter((p): p is string => Boolean(p));
+    if (paths.length > 0) {
+      await db.storage.from("product-images").remove(paths);
+    }
+  }
+
+  revalidatePath("/admin/products");
+  revalidatePath("/admin/promotions");
+  revalidatePath("/", "layout");
+  return {
+    ok: true,
+    message:
+      removedBundles.length > 0
+        ? `“${product.name}” deleted, with ${removedBundles.length === 1 ? "the bundle" : "the bundles"} ${removedBundles.map((n) => `“${n}”`).join(", ")}.`
+        : `“${product.name}” deleted.`,
+  };
 }
 
 export async function adjustStock(id: string, stock: number): Promise<AdminState> {
@@ -623,6 +745,32 @@ export async function saveSetting(
   return { ok: true, message: "Saved." };
 }
 
+/**
+ * Settings the Settings page may CREATE when the row is missing — the ones
+ * added after migration 0013 seeded the rest. Anything else must already
+ * exist: a crafted form cannot invent keys.
+ */
+const CONTENT_SETTINGS: Record<string, string> = {
+  home_highlights: "Homepage “Buying from” cards",
+  home_delivery_note: "Homepage Delivery card text (empty = written from the delivery zones)",
+  social_links: "Footer social links",
+};
+
+const SOCIAL_NETWORKS = ["facebook", "instagram", "youtube"] as const;
+
+/**
+ * The plain settings that are numbers. Everything else is saved as text —
+ * including a value an older version of this form stored as a number by
+ * mistake (a phone typed 01712345678 became 1712345678), so saving the
+ * corrected value repairs it instead of dropping the zero again.
+ */
+const NUMERIC_SETTINGS = new Set([
+  "return_window_days",
+  "low_stock_banner_threshold",
+  "cod_advance_threshold_paisa",
+  "analytics_retention_days",
+]);
+
 export async function saveSettings(
   _prev: AdminState,
   formData: FormData,
@@ -630,31 +778,222 @@ export async function saveSettings(
   const actor = await requireAdmin();
   const db = createAdminClient();
 
-  const updates: { key: string; value: unknown }[] = [];
-  for (const [key, raw] of formData.entries()) {
-    if (!key.startsWith("setting__")) continue;
-    const settingKey = key.slice("setting__".length);
-    const text = String(raw);
+  const { data: rows } = await db.from("settings").select("key, value");
+  const current = new Map(
+    ((rows ?? []) as { key: string; value: unknown }[]).map((r) => [r.key, r.value]),
+  );
 
-    // Settings are jsonb. Numbers stay numbers so the app can do arithmetic
-    // without parsing; everything else is stored as a JSON string.
+  const writes: { key: string; value: unknown }[] = [];
+  const fieldErrors: Record<string, string> = {};
+
+  // ── Plain values ──────────────────────────────────────────────────────────
+  for (const [field, raw] of formData.entries()) {
+    if (!field.startsWith("setting__")) continue;
+    const key = field.slice("setting__".length);
+    if (!current.has(key) && !(key in CONTENT_SETTINGS)) continue;
+
+    const was = current.get(key);
+    // Objects and lists have their own fields below (or their own page).
+    if (was !== null && typeof was === "object") continue;
+
+    const text = String(raw).trim();
     let value: unknown = text;
-    if (text.trim() !== "" && !Number.isNaN(Number(text)) && /^\d+$/.test(text.trim())) {
+
+    // Numbers only for the settings that are numbers. This used to turn ANY
+    // all-digit entry into one, so a phone typed as 01712345678 was saved as
+    // 1712345678 — the leading zero gone.
+    if (NUMERIC_SETTINGS.has(key)) {
+      if (!/^\d+$/.test(text)) {
+        fieldErrors[key] = "Whole numbers only.";
+        continue;
+      }
       value = Number(text);
     }
-    updates.push({ key: settingKey, value });
+
+    if (key === "store_name" && !text) {
+      fieldErrors[key] = "The store needs a name.";
+      continue;
+    }
+    if (key === "support_email" && text && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text)) {
+      // The footer turns this into a mailto: link; "bindutech.com" made one
+      // that opened an email to nobody.
+      fieldErrors[key] = "Enter a full email address, like support@example.com.";
+      continue;
+    }
+    writes.push({ key, value });
   }
 
-  for (const u of updates) {
-    await db
-      .from("settings")
-      .update({ value: u.value, updated_by: actor.id })
-      .eq("key", u.key);
+  // ── Social links (footer icons, chat bubble) ──────────────────────────────
+  if (SOCIAL_NETWORKS.some((n) => formData.has(`social__${n}`))) {
+    const links: Record<string, string> = {};
+
+    // Messenger links are m.me/<page username>. Accept the username or a
+    // pasted m.me / facebook.com link and keep just the username.
+    const rawMessenger = String(formData.get("social__messenger") ?? "").trim();
+    if (rawMessenger) {
+      // A page without a username has a link like
+      // facebook.com/profile.php?id=61550000000000 — m.me works with that id.
+      const byId = rawMessenger.match(/profile\.php\?(?:.*&)?id=(\d{5,20})/i);
+      const username = byId
+        ? byId[1]
+        : rawMessenger
+            .replace(/^https?:\/\/(www\.|web\.)?(m\.me|facebook\.com|fb\.com)\//i, "")
+            .replace(/[/?#].*$/, "");
+      const reserved = /^(profile\.php|pages|people|groups|events|watch|messages)$/i;
+      if (/^[A-Za-z0-9.]{5,60}$/.test(username) && !reserved.test(username)) {
+        links.messenger = username;
+      } else {
+        fieldErrors.social__messenger =
+          "Use the page's username (e.g. bindutech) or paste its facebook.com link.";
+      }
+    }
+
+    for (const net of SOCIAL_NETWORKS) {
+      const url = String(formData.get(`social__${net}`) ?? "").trim();
+      if (!url) continue;
+      if (!/^https?:\/\/[^\s/]+\.[^\s]+$/i.test(url)) {
+        fieldErrors[`social__${net}`] = "Paste the full link, starting with https://";
+        continue;
+      }
+      links[net] = url.replace(/^http:\/\//i, "https://");
+    }
+    writes.push({ key: "social_links", value: links });
+  }
+
+  // ── Homepage "Buying from" cards ──────────────────────────────────────────
+  if (formData.has("highlight__0__title")) {
+    const cards = Array.from({ length: HIGHLIGHT_SLOTS }, (_, i) => ({
+      icon: String(formData.get(`highlight__${i}__icon`) ?? ""),
+      title: String(formData.get(`highlight__${i}__title`) ?? ""),
+      body: String(formData.get(`highlight__${i}__body`) ?? ""),
+    }));
+    cards.forEach((c, i) => {
+      if (c.title.trim().length > HIGHLIGHT_TITLE_MAX) {
+        fieldErrors[`highlight__${i}__title`] = `Keep it under ${HIGHLIGHT_TITLE_MAX} characters.`;
+      }
+      if (c.body.trim().length > HIGHLIGHT_BODY_MAX) {
+        fieldErrors[`highlight__${i}__body`] = `Keep it under ${HIGHLIGHT_BODY_MAX} characters.`;
+      }
+    });
+    // A card with neither title nor text is dropped — that is how one is
+    // removed from the homepage.
+    writes.push({ key: "home_highlights", value: sanitiseHighlights(cards) });
+  }
+
+  // ── Checkout & rewards rules ──────────────────────────────────────────────
+  // Read by quote_cart / place_order in SQL, which cast each value to a
+  // number, so they are saved as numbers in exactly the stored shape. The form
+  // speaks taka; the database speaks paisa.
+  if (formData.has("rules__on")) {
+    const num = (
+      field: string,
+      min: number,
+      max: number,
+      opts: { integer?: boolean; label: string },
+    ): number | null => {
+      const raw = String(formData.get(field) ?? "").trim();
+      const n = Number(raw);
+      if (raw === "" || !Number.isFinite(n) || n < min || n > max || (opts.integer && !Number.isInteger(n))) {
+        fieldErrors[field] = `${opts.label}: ${min}–${max}${opts.integer ? ", whole numbers" : ""}.`;
+        return null;
+      }
+      return n;
+    };
+    const on = (field: string) => formData.get(field) === "on";
+
+    const advPercent = num("rules__advance_percent", 1, 100, { label: "Percent" });
+    const advMin = num("rules__advance_min", 0, 1_000_000, { integer: true, label: "Taka" });
+    const windowMinutes = num("rules__payment_window", 5, 1440, { integer: true, label: "Minutes" });
+    const pointValue = num("rules__points_value", 0.01, 1000, { label: "Taka" });
+    const pointsMin = num("rules__points_min", 0, 1_000_000, { integer: true, label: "Points" });
+    const refNew = num("rules__referral_new", 0, 100_000, { integer: true, label: "Taka" });
+    const refReferrer = num("rules__referral_referrer", 0, 100_000, { integer: true, label: "Taka" });
+    const prepaid = {
+      bkash: num("rules__prepaid_bkash", 0, 10_000, { integer: true, label: "Taka" }),
+      nagad: num("rules__prepaid_nagad", 0, 10_000, { integer: true, label: "Taka" }),
+      card: num("rules__prepaid_card", 0, 10_000, { integer: true, label: "Taka" }),
+    };
+
+    if (
+      advPercent !== null && advMin !== null && windowMinutes !== null &&
+      pointValue !== null && pointsMin !== null && refNew !== null && refReferrer !== null &&
+      prepaid.bkash !== null && prepaid.nagad !== null && prepaid.card !== null
+    ) {
+      writes.push(
+        {
+          key: "advance_payment",
+          value: {
+            enabled: on("rules__advance_enabled"),
+            percent: Math.round(advPercent * 10) / 10,
+            min_paisa: advMin * 100,
+          },
+        },
+        { key: "payment_window", value: { minutes: windowMinutes } },
+        {
+          key: "points_rules",
+          value: {
+            enabled: on("rules__points_enabled"),
+            paisa_per_point: Math.round(pointValue * 100),
+            min_redeem_points: pointsMin,
+          },
+        },
+        {
+          key: "referral_reward",
+          value: {
+            enabled: on("rules__referral_enabled"),
+            referred_paisa: refNew * 100,
+            referrer_paisa: refReferrer * 100,
+          },
+        },
+        {
+          key: "delivery_payment_adjust",
+          // A discount is stored as a negative adjustment. Cash on delivery
+          // and "other" are not on the form and keep whatever they hold. A
+          // positive value (a surcharge, set in the table editor) cannot be
+          // shown as a discount; the form renders it as 0, so a 0 coming back
+          // for such a method means "untouched" and the surcharge is kept.
+          value: (() => {
+            const prev = (current.get("delivery_payment_adjust") ?? {}) as Record<string, number>;
+            const next: Record<string, number> = { ...prev };
+            for (const m of ["bkash", "nagad", "card"] as const) {
+              const off = prepaid[m] as number;
+              next[m] = off === 0 && Number(prev[m]) > 0 ? Number(prev[m]) : -off * 100;
+            }
+            return next;
+          })(),
+        },
+      );
+    }
+  }
+
+  if (Object.keys(fieldErrors).length > 0) {
+    return {
+      ok: false,
+      error: "Some fields need fixing. Nothing was saved.",
+      fieldErrors,
+    };
+  }
+
+  const results = await Promise.all(
+    writes.map((w) =>
+      current.has(w.key)
+        ? db.from("settings").update({ value: w.value, updated_by: actor.id }).eq("key", w.key)
+        : db.from("settings").insert({
+            key: w.key,
+            value: w.value,
+            is_public: true,
+            description: CONTENT_SETTINGS[w.key] ?? null,
+            updated_by: actor.id,
+          }),
+    ),
+  );
+  if (results.some((r) => r.error)) {
+    return { ok: false, error: "Some settings could not be saved. Try again." };
   }
 
   revalidatePath("/admin/settings");
   revalidatePath("/", "layout");
-  return { ok: true, message: `${updates.length} settings saved.` };
+  return { ok: true, message: "Settings saved. The storefront shows them now." };
 }
 
 // ── Delivery zones ──────────────────────────────────────────────────────────
@@ -1010,6 +1349,53 @@ export async function resetSiteTheme(): Promise<AdminState> {
 }
 
 // ── Promotions ──────────────────────────────────────────────────────────────
+
+
+export interface PromotionProduct {
+  id: string;
+  name: string;
+  sku: string;
+  price_paisa: number;
+  thumbnail_url: string | null;
+}
+
+/**
+ * Product search for the Promotions page.
+ *
+ * The page used to load the first 300 products into a dropdown: past 300 the
+ * rest could not be chosen at all, and nobody can scan 300 names anyway. This
+ * searches the whole catalogue by name or SKU, every word required, so
+ * "anker 20000" finds "Anker PowerCore 20,000mAh" whatever the word order.
+ */
+export async function searchPromotionProducts(query: string): Promise<PromotionProduct[]> {
+  await requirePermission("coupons");
+  const db = createAdminClient();
+
+  // Characters that are wildcards or filter syntax to PostgREST become
+  // spaces: a search box should match what was typed, not be parsed.
+  const words = String(query ?? "")
+    .replace(/[%_*,()\\"':.]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 5)
+    .map((w) => w.slice(0, 40));
+
+  let q = db
+    .from("products")
+    .select("id, name, sku, price_paisa, thumbnail_url")
+    .neq("status", "archived")
+    .order("name")
+    .limit(20);
+  for (const w of words) {
+    q = q.or(`name.ilike.%${w}%,sku.ilike.%${w}%`);
+  }
+
+  const { data, error } = await q;
+  // Thrown, so the picker says "could not search" instead of "no product
+  // matches" — the second would tell the operator the product does not exist.
+  if (error) throw new Error("Product search failed.");
+  return (data ?? []) as PromotionProduct[];
+}
 
 /**
  * Create a quantity break ("buy N, save X%").

@@ -1,6 +1,13 @@
 "use client";
 
-import { useActionState, useState, useTransition } from "react";
+import {
+  startTransition,
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { Trash2, Plus, Package, Layers } from "lucide-react";
 import {
   saveQuantityBreak,
@@ -8,18 +15,29 @@ import {
   saveBundle,
   deleteBundle,
   type AdminState,
+  type PromotionProduct,
 } from "@/lib/actions/admin";
 import { Button } from "@/components/ui/button";
 import { Card, EmptyState } from "@/components/ui/primitives";
-import { formatTaka } from "@/lib/utils/money";
+import { ProductSearchPicker } from "./product-search-picker";
 
 const initial: AdminState = { ok: false };
 
-export interface PickerProduct {
-  id: string;
-  name: string;
-  price_paisa: number;
+/**
+ * Submit without React 19's automatic form reset, which also fires on a
+ * FAILED save and would throw away the numbers just typed. After a
+ * successful save the form is cleared on purpose (see the effects below).
+ */
+function submitKeepingFields(
+  action: (fd: FormData) => void,
+): React.FormEventHandler<HTMLFormElement> {
+  return (e) => {
+    e.preventDefault();
+    const data = new FormData(e.currentTarget);
+    startTransition(() => action(data));
+  };
 }
+
 export interface PickerCategory {
   id: string;
   name: string;
@@ -47,34 +65,40 @@ export interface BundleRow {
 export function PromotionsManager({
   breaks,
   bundles,
-  products,
   categories,
 }: {
   breaks: BreakRow[];
   bundles: BundleRow[];
-  products: PickerProduct[];
   categories: PickerCategory[];
 }) {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <QuantityBreaks rows={breaks} products={products} categories={categories} />
-      <Bundles rows={bundles} products={products} />
+      <QuantityBreaks rows={breaks} categories={categories} />
+      <Bundles rows={bundles} />
     </div>
   );
 }
 
 function QuantityBreaks({
   rows,
-  products,
   categories,
 }: {
   rows: BreakRow[];
-  products: PickerProduct[];
   categories: PickerCategory[];
 }) {
   const [state, action, pending] = useActionState(saveQuantityBreak, initial);
   const [scope, setScope] = useState<"product" | "category">("product");
+  const [product, setProduct] = useState<PromotionProduct[]>([]);
   const [removing, startRemove] = useTransition();
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (!state.ok) return;
+    formRef.current?.reset();
+    setProduct([]);
+  }, [state]);
+
+  const missingTarget = scope === "product" && product.length === 0;
 
   return (
     <Card className="p-5">
@@ -87,7 +111,12 @@ function QuantityBreaks({
         rule on its category.
       </p>
 
-      <form action={action} className="mt-4 space-y-3">
+      <form
+        ref={formRef}
+        action={action}
+        onSubmit={submitKeepingFields(action)}
+        className="mt-4 space-y-3"
+      >
         <div className="flex gap-2">
           {(["product", "category"] as const).map((s) => (
             <label key={s} className="flex items-center gap-1.5 text-sm capitalize text-ink">
@@ -104,20 +133,22 @@ function QuantityBreaks({
           ))}
         </div>
 
-        <select
-          name="target_id"
-          required
-          className="h-10 w-full rounded-lg border border-line-strong bg-surface px-3 text-sm focus:border-brand-600 focus:outline-none"
-        >
-          <option value="">
-            {scope === "product" ? "Choose a product…" : "Choose a category…"}
-          </option>
-          {(scope === "product" ? products : categories).map((o) => (
-            <option key={o.id} value={o.id}>
-              {o.name}
-            </option>
-          ))}
-        </select>
+        {scope === "product" ? (
+          <ProductSearchPicker name="target_id" value={product} onChange={setProduct} />
+        ) : (
+          <select
+            name="target_id"
+            required
+            className="h-10 w-full rounded-lg border border-line-strong bg-surface px-3 text-sm focus:border-brand-600 focus:outline-none"
+          >
+            <option value="">Choose a category…</option>
+            {categories.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.name}
+              </option>
+            ))}
+          </select>
+        )}
 
         <div className="grid grid-cols-2 gap-2">
           <label className="block">
@@ -150,7 +181,7 @@ function QuantityBreaks({
           </label>
         </div>
 
-        <Button type="submit" size="sm" loading={pending}>
+        <Button type="submit" size="sm" loading={pending} disabled={missingTarget}>
           <Plus size={15} />
           Add rule
         </Button>
@@ -199,13 +230,17 @@ function QuantityBreaks({
   );
 }
 
-function Bundles({ rows, products }: { rows: BundleRow[]; products: PickerProduct[] }) {
+function Bundles({ rows }: { rows: BundleRow[] }) {
   const [state, action, pending] = useActionState(saveBundle, initial);
-  const [picked, setPicked] = useState<string[]>([]);
+  const [picked, setPicked] = useState<PromotionProduct[]>([]);
   const [removing, startRemove] = useTransition();
+  const formRef = useRef<HTMLFormElement>(null);
 
-  const toggle = (id: string) =>
-    setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
+  useEffect(() => {
+    if (!state.ok) return;
+    formRef.current?.reset();
+    setPicked([]);
+  }, [state]);
 
   return (
     <Card className="p-5">
@@ -218,7 +253,12 @@ function Bundles({ rows, products }: { rows: BundleRow[]; products: PickerProduc
         off those lines only.
       </p>
 
-      <form action={action} className="mt-4 space-y-3">
+      <form
+        ref={formRef}
+        action={action}
+        onSubmit={submitKeepingFields(action)}
+        className="mt-4 space-y-3"
+      >
         <input
           name="name"
           required
@@ -242,26 +282,17 @@ function Bundles({ rows, products }: { rows: BundleRow[]; products: PickerProduc
           />
         </label>
 
-        <div className="max-h-52 overflow-y-auto rounded-lg border border-line p-2">
-          {products.map((p) => (
-            <label
-              key={p.id}
-              className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-surface-sunken"
-            >
-              <input
-                type="checkbox"
-                name="product_ids"
-                value={p.id}
-                checked={picked.includes(p.id)}
-                onChange={() => toggle(p.id)}
-                className="size-4 shrink-0 accent-brand-600"
-              />
-              <span className="min-w-0 flex-1 truncate text-ink">{p.name}</span>
-              <span className="shrink-0 text-xs tabular text-ink-muted">
-                {formatTaka(p.price_paisa)}
-              </span>
-            </label>
-          ))}
+        <div>
+          <span className="mb-1 block text-xs font-medium text-ink-muted">
+            Products in the bundle (two or more)
+          </span>
+          <ProductSearchPicker
+            name="product_ids"
+            multiple
+            value={picked}
+            onChange={setPicked}
+            placeholder="Search and add products…"
+          />
         </div>
 
         <Button type="submit" size="sm" loading={pending} disabled={picked.length < 2}>

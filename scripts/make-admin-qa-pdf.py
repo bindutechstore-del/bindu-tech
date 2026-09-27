@@ -248,6 +248,25 @@ SECTIONS = [
    "Status flips without opening the product. The list reflects it immediately."),
   ("P-022", "Archive a product.",
    "Leaves the Active list, appears under Archived, and is not purchasable."),
+  ("P-022a", "Create a throwaway product 'QA Delete Me' with a picture. In the product "
+   "list press its bin icon and read the message.",
+   "It asks to delete permanently, says pictures, reviews and promotions go with it, "
+   "that past orders keep their record, and suggests Archive for a reversible option."),
+  ("P-022b", "Press Cancel.",
+   "Nothing happens. The product is still listed."),
+  ("P-022c", "Press the bin again and confirm.",
+   "'QA Delete Me deleted.' It leaves the list and the storefront; its URL shows "
+   "'not found'."),
+  ("P-022d", "Open a product that has been ORDERED before, press Delete at the top of "
+   "its page, and confirm. Then open that old order in Orders.",
+   "The product is gone, and you are back on the product list. The old order still "
+   "shows the item's name, SKU, price and picture exactly as before."),
+  ("P-022e", "Make a bundle of two products (section 9), then delete ONE of them.",
+   "The message says the bundle was deleted too. It is gone from Promotions, and the "
+   "other product alone gets no bundle discount in the cart."),
+  ("P-022f", "After deleting a product that sold this month, open the Dashboard.",
+   "The Gross margin tile says it excludes the sold lines of deleted products, rather "
+   "than counting their whole price as profit."),
   ("P-023", "Set stock to 0 on an active product. Open the storefront.",
    "Shows as out of stock. Add to cart is unavailable."),
   ("P-024", "Set low-stock threshold to 5 and stock to 3.",
@@ -387,8 +406,18 @@ SECTIONS = [
  "Both are priced in SQL beside coupons, so a promotion and a coupon can never "
  "disagree with the cart.",
  [
-  ("R-001", "Open Promotions. Create a quantity break: pick a product, minimum 3, 15% off.",
-   "Rule listed under the product's name."),
+  ("R-001", "Open Promotions. Create a quantity break: type part of a product's name "
+   "(or its SKU) in the search box, pick it from the list, minimum 3, 15% off.",
+   "Matching products appear as you type, with picture, SKU and price. The chosen one "
+   "shows as a chip. After saving, the rule is listed under the product's name and "
+   "the form is empty again."),
+  ("R-001a", "Search with the words in a different order (e.g. 'tune jbl' for "
+   "'JBL Tune 520BT').",
+   "The product is still found. Words can be in any order."),
+  ("R-001b", "Search for something that does not exist.",
+   "'No product matches ...' -- no error."),
+  ("R-001c", "In the search box use the arrow keys to highlight a result and press Enter.",
+   "The highlighted product is chosen. The form is NOT submitted by the Enter key."),
   ("R-002", "Open that product on the storefront.",
    "'Buy more, save more' panel shows 'Buy 3 or more' and the per-unit price after "
    "the discount."),
@@ -403,8 +432,10 @@ SECTIONS = [
   ("R-007", "Create a category-wide rule, then a product rule on a product in that "
    "category with a different percentage.",
    "The product rule wins in the cart. The product page advertises the same one."),
-  ("R-008", "Create a bundle from two products at 10% off.",
-   "Bundle listed with both product names."),
+  ("R-008", "Create a bundle: search and add two products (each appears as a chip; "
+   "the X on a chip removes it), 10% off.",
+   "The button counts the products picked. After saving, the bundle is listed with "
+   "both product names."),
   ("R-009", "Open either product on the storefront.",
    "The bundle panel shows both items, their prices, and the total saving."),
   ("R-010", "Put only ONE of the two in the cart.",
@@ -588,10 +619,33 @@ SECTIONS = [
    "The new name shows in the header, the page title, the footer, the homepage "
    "'Buying from ...' and 'Best sellers' lines, and the About page. The developer "
    "credit line is not the store name and does not change."),
-  ("N-002", "Change the support phone, WhatsApp, email and hours.",
-   "All appear on the storefront contact page and in the header strip."),
-  ("N-003", "Change the warranty note.",
-   "Appears on every product page."),
+  ("N-001a", "Under Store, rewrite 'About the store' and save.",
+   "The paragraph under the store name in the footer changes."),
+  ("N-002", "Under Contact, change the phone, WhatsApp, email and hours.",
+   "All appear in the footer and on the Contact page. The chat bubble (bottom right) "
+   "calls and WhatsApps the NEW numbers."),
+  ("N-002a", "Type the phone as 01712345678 (starting with 0) and save. Reload Settings.",
+   "It still starts with 0 -- the leading zero is kept."),
+  ("N-002b", "Type an email without an @ (e.g. 'bindutech.com') and save.",
+   "Refused: the email box asks for a full address. Nothing is saved until it is "
+   "fixed. (The footer never shows an email line for an invalid address.)"),
+  ("N-002c", "Under Social links, change the Facebook link, clear the YouTube box, and "
+   "enter a Messenger username. Save.",
+   "The footer's Facebook icon opens the new page, the YouTube icon is gone, and the "
+   "chat bubble offers Messenger (m.me/username)."),
+  ("N-002d", "Paste a social link without https:// (e.g. 'facebook.com/x').",
+   "Refused with 'Paste the full link, starting with https://'."),
+  ("N-003", "Under Homepage, change the Warranty & replacement text.",
+   "Appears on the homepage Warranty card and on every product page."),
+  ("N-003a", "Under Homepage, change card 2's icon, title and text. Save and open the "
+   "homepage.",
+   "The 'Buying from ...' row shows the new icon and words."),
+  ("N-003b", "Clear card 4's title AND text and save.",
+   "The homepage row shows three cards. Typing into card 4 again brings it back."),
+  ("N-003c", "Leave the Delivery card box empty, then change the Inside Dhaka charge "
+   "(Delivery zones, lower on the page).",
+   "The homepage Delivery card rewrites itself with the new charge. Typing your own "
+   "text in the box replaces it; clearing the box goes back to the automatic text."),
   ("N-004", "Change the showroom address.",
    "Appears in the storefront footer and on the Contact page."),
   ("N-005", "Check the delivery options on a product page, in the cart and at checkout.",
@@ -604,15 +658,22 @@ SECTIONS = [
    "Dhaka). It never flashes 'Free'."),
   ("N-006", "Change the Inside Dhaka charge and save. Open a product page.",
    "The Shipping options panel shows the new amount, and so does the cart and checkout."),
-  ("N-007", "Change the payment window (minutes) and open checkout with bKash.",
+  ("N-006a", "Scroll to 'Checkout & rewards'. Read the current values.",
+   "Advance payment, bKash/Nagad payment window, reward points, refer & earn and the "
+   "prepaid delivery discount are all shown in taka, minutes and points -- not paisa."),
+  ("N-006b", "Enter 150 as the advance percent and save.",
+   "Refused: 'Percent: 1-100'. Nothing is saved."),
+  ("N-007", "Under Checkout & rewards, change the payment window (minutes) and open "
+   "checkout with bKash.",
    "The warning states the new number of minutes."),
-  ("N-008", "Change the advance payment percentage and minimum.",
+  ("N-008", "Under Checkout & rewards, change the advance percentage and minimum.",
    "The 'Pay now' figure at checkout follows the new rule."),
-  ("N-009", "Change the points conversion rate and minimum redemption.",
+  ("N-009", "Under Checkout & rewards, change what 1 point is worth and the minimum "
+   "points to spend.",
    "The account page and the checkout redemption line reflect the new values."),
-  ("N-010", "Change the referral reward amounts.",
+  ("N-010", "Under Checkout & rewards, change the Refer & earn amounts.",
    "The Refer & earn page quotes the new figures."),
-  ("N-011", "Change the prepaid delivery discount.",
+  ("N-011", "Under Checkout & rewards, change the bKash and Nagad delivery discounts.",
    "The cart's 'Total by payment method' shows the new saving for bKash and Nagad."),
  ],
 ),

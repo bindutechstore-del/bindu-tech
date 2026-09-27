@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/primitives";
 import { ProductStatusToggle } from "@/components/admin/product-status-toggle";
+import { DeleteProductButton } from "@/components/admin/delete-product-button";
 import { formatTaka } from "@/lib/utils/money";
 import type { AdminProductRow } from "@/lib/queries/admin";
 
@@ -130,6 +131,7 @@ export function ProductRows({
                   <Pencil size={15} />
                 </Link>
                 <ProductStatusToggle id={p.id} status={p.status} />
+                <DeleteProductButton id={p.id} name={p.name} />
               </div>
             </td>
           </tr>

@@ -114,6 +114,10 @@ export default async function AdminProductsPage({
             {/* Pages 2..n arrive as the user scrolls, rendered on the server
                 by the same ProductRows component. */}
             <LoadMoreRows
+              // Remount when the list changes (a delete lowers the total):
+              // rows already loaded from page 2+ would otherwise stay on
+              // screen after their product was gone, or shift by one.
+              key={`${listQuery}|${total}`}
               action={loadMoreAdminProducts}
               query={listQuery}
               initialNextPage={nextPage}

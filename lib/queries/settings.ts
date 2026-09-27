@@ -1,5 +1,10 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+import {
+  DEFAULT_HIGHLIGHTS,
+  sanitiseHighlights,
+  type HomeHighlight,
+} from "@/lib/content/highlights";
 
 /**
  * Public store configuration, seeded by migration 0013 and editable at
@@ -19,12 +24,22 @@ export interface StoreSettings {
   support_email: string;
   support_hours: string;
   showroom_address: string;
-  social_links: { facebook?: string; instagram?: string; youtube?: string };
+  social_links: {
+    facebook?: string;
+    instagram?: string;
+    youtube?: string;
+    /** Facebook page username, for m.me/<username> links. */
+    messenger?: string;
+  };
   currency: { code: string; symbol: string; locale: string };
   cod_advance_threshold_paisa: number;
   return_window_days: number;
   warranty_note: string;
   low_stock_banner_threshold: number;
+  /** The "Buying from <store>" cards on the homepage. */
+  home_highlights: HomeHighlight[];
+  /** The homepage Delivery card. Empty = written from the delivery zones. */
+  home_delivery_note: string;
 }
 
 /** Used when the settings row is missing so the UI still renders sensibly. */
@@ -44,6 +59,8 @@ const FALLBACK: StoreSettings = {
   return_window_days: 7,
   warranty_note: "",
   low_stock_banner_threshold: 5,
+  home_highlights: DEFAULT_HIGHLIGHTS,
+  home_delivery_note: "",
 };
 
 export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
@@ -53,7 +70,26 @@ export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
   const rows = (data as { key: string; value: unknown }[] | null) ?? [];
   const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
 
-  return { ...FALLBACK, ...map } as StoreSettings;
+  const merged = { ...FALLBACK, ...map } as StoreSettings;
+
+  // Coerce every field to the type the storefront assumes. A phone saved as
+  // a number by an older admin form, or a null, would otherwise crash every
+  // page at `.replace()` / `.includes()` in the header, footer or chat bubble.
+  const loose = merged as unknown as Record<string, unknown>;
+  for (const [key, fallback] of Object.entries(FALLBACK)) {
+    const value = loose[key];
+    if (typeof fallback === "string" && typeof value !== "string") {
+      loose[key] = value == null ? fallback : String(value);
+    } else if (typeof fallback === "number" && typeof value !== "number") {
+      const n = Number(value);
+      loose[key] = Number.isFinite(n) ? n : fallback;
+    }
+  }
+  // Admin-entered structure: never trust its shape at render time.
+  merged.home_highlights = sanitiseHighlights(merged.home_highlights);
+  merged.social_links =
+    merged.social_links && typeof merged.social_links === "object" ? merged.social_links : {};
+  return merged;
 });
 
 export const getDeliveryZones = cache(async () => {

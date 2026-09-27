@@ -19,7 +19,7 @@ export default async function AdminPromotionsPage() {
   await requirePermission("coupons");
   const db = createAdminClient();
 
-  const [{ data: breaks }, { data: bundles }, { data: items }, { data: products }, { data: categories }] =
+  const [{ data: breaks }, { data: bundles }, { data: items }, { data: categories }] =
     await Promise.all([
       db
         .from("quantity_breaks")
@@ -27,18 +27,28 @@ export default async function AdminPromotionsPage() {
         .order("min_quantity"),
       db.from("bundles").select("id, name, discount_percent").order("created_at", { ascending: false }),
       db.from("bundle_items").select("bundle_id, product_id"),
-      db
-        .from("products")
-        .select("id, name, price_paisa")
-        .neq("status", "archived")
-        .order("name")
-        .limit(300),
       db.from("categories").select("id, name").eq("is_active", true).order("position"),
     ]);
 
-  const productList = (products ?? []) as { id: string; name: string; price_paisa: number }[];
+  // Names only for the products the rules actually use. Products are chosen
+  // through a search box now, so the page no longer preloads a catalogue
+  // slice — and a rule on product #301 no longer reads "Unknown product".
+  const usedIds = [
+    ...new Set(
+      [
+        ...((breaks ?? []) as { product_id: string | null }[]).map((b) => b.product_id),
+        ...((items ?? []) as { product_id: string }[]).map((i) => i.product_id),
+      ].filter((v): v is string => Boolean(v)),
+    ),
+  ];
+  const { data: usedProducts } = usedIds.length
+    ? await db.from("products").select("id, name").in("id", usedIds)
+    : { data: [] };
+
   const categoryList = (categories ?? []) as { id: string; name: string }[];
-  const productName = new Map(productList.map((p) => [p.id, p.name]));
+  const productName = new Map(
+    ((usedProducts ?? []) as { id: string; name: string }[]).map((p) => [p.id, p.name]),
+  );
   const categoryName = new Map(categoryList.map((c) => [c.id, c.name]));
 
   const breakRows: BreakRow[] = (
@@ -80,7 +90,6 @@ export default async function AdminPromotionsPage() {
       <PromotionsManager
         breaks={breakRows}
         bundles={bundleRows}
-        products={productList}
         categories={categoryList}
       />
     </>

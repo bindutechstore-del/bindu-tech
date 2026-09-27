@@ -6,6 +6,12 @@ import {
   Truck,
   BadgeCheck,
   Headphones,
+  Wallet,
+  RotateCcw,
+  Gift,
+  Clock,
+  Star,
+  Store,
   type LucideIcon,
 } from "lucide-react";
 import * as Icons from "lucide-react";
@@ -13,6 +19,7 @@ import { ProductCard } from "@/components/product/product-card";
 import { Rating } from "@/components/ui/primitives";
 import type { ProductCard as ProductCardData } from "@/lib/queries/catalog";
 import type { Banner, Category } from "@/types/database";
+import type { HighlightIcon, HomeHighlight } from "@/lib/content/highlights";
 
 /** Section shell: heading, optional "see all", and the content. */
 export function Section({
@@ -162,41 +169,35 @@ export function OfferCards({ banners }: { banners: Banner[] }) {
 }
 
 /** Static value props — deliberately not database-driven, they never change. */
-export function WhyChooseUs() {
-  const points = [
-    {
-      icon: Truck,
-      title: "Nationwide delivery",
-      body: "Dhaka in 1–2 days, everywhere else in 3–5. Cash on delivery available on every order.",
-    },
-    {
-      icon: ShieldCheck,
-      title: "Official warranty",
-      body: "Claimable at the brand's authorised Bangladesh service centre. We re-issue invoices any time.",
-    },
-    {
-      icon: BadgeCheck,
-      title: "Genuine stock only",
-      body: "No refurbished units sold as new. Every serial is verifiable before you pay.",
-    },
-    {
-      icon: Headphones,
-      title: "Real humans",
-      body: "WhatsApp, Messenger or a phone call. Saturday to Thursday, 10:00–20:00.",
-    },
-  ];
+const HIGHLIGHT_ICON: Record<HighlightIcon, LucideIcon> = {
+  truck: Truck,
+  shield: ShieldCheck,
+  badge: BadgeCheck,
+  headphones: Headphones,
+  wallet: Wallet,
+  refresh: RotateCcw,
+  gift: Gift,
+  clock: Clock,
+  star: Star,
+  store: Store,
+};
 
+/** The "Buying from <store>" cards — written in /admin/settings. */
+export function WhyChooseUs({ highlights }: { highlights: HomeHighlight[] }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {points.map((p) => (
-        <div key={p.title} className="rounded-xl border border-line bg-surface p-5">
-          <span className="flex size-10 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
-            <p.icon size={19} />
-          </span>
-          <h3 className="mt-3 text-sm font-semibold text-ink">{p.title}</h3>
-          <p className="mt-1 text-sm leading-5 text-ink-muted">{p.body}</p>
-        </div>
-      ))}
+      {highlights.map((p, i) => {
+        const Icon = HIGHLIGHT_ICON[p.icon] ?? BadgeCheck;
+        return (
+          <div key={i} className="rounded-xl border border-line bg-surface p-5">
+            <span className="flex size-10 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+              <Icon size={19} />
+            </span>
+            {p.title ? <h3 className="mt-3 text-sm font-semibold text-ink">{p.title}</h3> : null}
+            {p.body ? <p className="mt-1 text-sm leading-5 text-ink-muted">{p.body}</p> : null}
+          </div>
+        );
+      })}
     </div>
   );
 }

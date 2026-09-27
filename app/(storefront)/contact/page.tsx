@@ -16,8 +16,11 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function ContactPage() {
   const settings = await getStoreSettings();
 
-  const whatsapp = process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP?.replace(/[^0-9]/g, "");
-  const messenger = process.env.NEXT_PUBLIC_SUPPORT_MESSENGER;
+  // Settings first, so what the admin types is what the buttons dial.
+  const whatsapp = (settings.support_whatsapp || process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP || "")
+    .replace(/[^0-9]/g, "");
+  const messenger = settings.social_links.messenger || process.env.NEXT_PUBLIC_SUPPORT_MESSENGER;
+  const email = settings.support_email.includes("@") ? settings.support_email : "";
 
   // Only render a channel that is actually configured — no dead buttons.
   const channels = [
@@ -30,7 +33,7 @@ export default async function ContactPage() {
       tone: "text-success",
       external: true,
     },
-    {
+    settings.support_phone && {
       href: `tel:${settings.support_phone}`,
       icon: Phone,
       label: "Phone",
@@ -48,11 +51,11 @@ export default async function ContactPage() {
       tone: "text-brand-600",
       external: true,
     },
-    {
-      href: `mailto:${settings.support_email}`,
+    email && {
+      href: `mailto:${email}`,
       icon: Mail,
       label: "Email",
-      value: settings.support_email,
+      value: email,
       hint: "For invoices, warranty paperwork and anything long",
       tone: "text-ink",
       external: false,

@@ -9,6 +9,9 @@ import {
   getHomeReviews,
 } from "@/lib/queries/home";
 import { getStoreSettings } from "@/lib/queries/settings";
+import { getDeliveryOptions } from "@/lib/queries/delivery";
+import { deliveryNoteFromOptions } from "@/lib/content/highlights";
+import { formatTaka } from "@/lib/utils/money";
 import { HeroCards } from "@/components/storefront/hero-cards";
 import { FlashSaleSection } from "@/components/storefront/flash-sale";
 import {
@@ -39,7 +42,17 @@ export const revalidate = 300;
  * not scrolled to yet.
  */
 export default async function HomePage() {
-  const [banners, settings] = await Promise.all([getBanners(), getStoreSettings()]);
+  const [banners, settings, deliveryOptions] = await Promise.all([
+    getBanners(),
+    getStoreSettings(),
+    getDeliveryOptions(),
+  ]);
+
+  // The admin's own words if they wrote some, otherwise the live charges —
+  // never a hardcoded sentence that goes stale when a charge changes.
+  const deliveryNote =
+    settings.home_delivery_note.trim() ||
+    deliveryNoteFromOptions(deliveryOptions, formatTaka);
 
   return (
     <>
@@ -81,9 +94,11 @@ export default async function HomePage() {
         <ReviewsBlock />
       </Suspense>
 
-      <Section title={`Buying from ${settings.store_name}`}>
-        <WhyChooseUs />
-      </Section>
+      {settings.home_highlights.length > 0 ? (
+        <Section title={`Buying from ${settings.store_name}`}>
+          <WhyChooseUs highlights={settings.home_highlights} />
+        </Section>
+      ) : null}
 
       {/* Delivery + warranty + contact, the three things a BD shopper checks
           before committing to cash on delivery. */}
@@ -92,15 +107,12 @@ export default async function HomePage() {
           <div className="rounded-xl border border-line bg-surface p-6">
             <Truck className="text-brand-600" size={22} />
             <h3 className="mt-3 text-base font-semibold text-ink">Delivery</h3>
-            <p className="mt-1 text-sm leading-6 text-ink-muted">
-              Inside Dhaka 1–2 days, suburbs 2–3 days, rest of Bangladesh 3–5 days.
-              Free delivery kicks in automatically above each zone&apos;s threshold.
-            </p>
+            <p className="mt-1 text-sm leading-6 text-ink-muted">{deliveryNote}</p>
             <Link
               href="/shipping"
               className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-brand-600 hover:text-brand-700"
             >
-              Charges by district <ArrowRight size={14} />
+              Delivery charges <ArrowRight size={14} />
             </Link>
           </div>
 

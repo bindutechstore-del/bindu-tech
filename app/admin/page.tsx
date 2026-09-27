@@ -193,7 +193,7 @@ async function StatTiles() {
 }
 
 async function MarginTile() {
-  const { grossMarginPaisa, truncated } = await getMonthlyMargin();
+  const { grossMarginPaisa, truncated, excludedLines } = await getMonthlyMargin();
 
   return (
     <StatTile
@@ -202,7 +202,9 @@ async function MarginTile() {
       sub={
         truncated
           ? "Partial — first 5,000 lines this month"
-          : "Revenue minus cost of goods"
+          : excludedLines > 0
+            ? `Excludes ${excludedLines} sold ${excludedLines === 1 ? "line" : "lines"} of deleted products`
+            : "Revenue minus cost of goods"
       }
       icon={Wallet}
       tone="text-success"
