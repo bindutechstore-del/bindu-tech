@@ -82,17 +82,30 @@ export default async function HomePage() {
         <CategoriesSection />
       </Suspense>
 
+      {/* Products first, information after: New arrivals sits right under the
+          categories, and "Why shop with us" moved down with the other
+          reassurance sections instead of splitting the product rows. */}
+      <Suspense fallback={<RailSkeleton title="New arrivals" />}>
+        <NewArrivalsBlock />
+      </Suspense>
+
       <Suspense fallback={null}>
         <FlashSaleBlock />
       </Suspense>
 
       <Suspense fallback={<RailSkeleton title="Best sellers" />}>
-        <RailsBlock offerCards={banners.offerCards} storeName={settings.store_name} />
+        <RailsBlock storeName={settings.store_name} />
       </Suspense>
 
       <Suspense fallback={null}>
         <ReviewsBlock />
       </Suspense>
+
+      {banners.offerCards.length > 0 ? (
+        <Section title="Why shop with us">
+          <OfferCards banners={banners.offerCards} />
+        </Section>
+      ) : null}
 
       {settings.home_highlights.length > 0 ? (
         <Section title={`Buying from ${settings.store_name}`}>
@@ -175,16 +188,27 @@ async function FlashSaleBlock() {
 }
 
 /**
- * The three product rails share one query, so they share one boundary.
- * Splitting them further would mean three round trips for rows that overlap.
+ * New arrivals, right under the categories. getRailProducts is wrapped in
+ * React `cache`, so this and RailsBlock share one fetch per request.
  */
-async function RailsBlock({
-  offerCards,
-  storeName,
-}: {
-  offerCards: Awaited<ReturnType<typeof getBanners>>["offerCards"];
-  storeName: string;
-}) {
+async function NewArrivalsBlock() {
+  const rails = await getRailProducts();
+  if (rails.newArrivals.length === 0) return null;
+
+  return (
+    <Section
+      title="New arrivals"
+      subtitle="Fresh stock, just published."
+      // "See all" lists exactly the ticked products the rail is showing.
+      href={rails.newArrivalsTicked ? "/products?new=1" : "/products?sort=newest"}
+    >
+      <ProductRail products={rails.newArrivals} />
+    </Section>
+  );
+}
+
+/** Best sellers and Handpicked — same cached fetch as New arrivals. */
+async function RailsBlock({ storeName }: { storeName: string }) {
   const rails = await getRailProducts();
 
   if (!rails.hasAny) {
@@ -218,23 +242,6 @@ async function RailsBlock({
       {rails.featured.length > 0 ? (
         <Section title="Handpicked for you" href="/products?sort=newest">
           <ProductGrid products={rails.featured} priorityCount={4} />
-        </Section>
-      ) : null}
-
-      {offerCards.length > 0 ? (
-        <Section title="Why shop with us">
-          <OfferCards banners={offerCards} />
-        </Section>
-      ) : null}
-
-      {rails.newArrivals.length > 0 ? (
-        <Section
-          title="New arrivals"
-          subtitle="Fresh stock, just published."
-          // "See all" lists exactly the ticked products the rail is showing.
-          href={rails.newArrivalsTicked ? "/products?new=1" : "/products?sort=newest"}
-        >
-          <ProductRail products={rails.newArrivals} />
         </Section>
       ) : null}
     </>
