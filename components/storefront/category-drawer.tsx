@@ -58,7 +58,6 @@ const PARTNER_LINKS: {
   tone: string;
 }[] = [
   { href: "/group-buy", label: "Group Buy", icon: Users, tone: "bg-brand-600" },
-  { href: "/dropship", label: "Dropship", icon: Truck, tone: "bg-ink" },
   {
     href: "/be-partner",
     label: "Be Partner",
