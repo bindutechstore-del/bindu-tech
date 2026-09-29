@@ -7,7 +7,7 @@ import { saveBrand, deleteBrand, type AdminState } from "@/lib/actions/admin";
 import { ImageUploader } from "./image-uploader";
 import { Button } from "@/components/ui/button";
 import { Card, Badge, EmptyState } from "@/components/ui/primitives";
-import { Input, Field } from "@/components/ui/field";
+import { Input, Textarea, Field } from "@/components/ui/field";
 
 const initial: AdminState = { ok: false };
 
@@ -16,6 +16,7 @@ export interface BrandRow {
   name: string;
   slug: string;
   logo_url: string | null;
+  description: string | null;
   is_active: boolean;
   productCount: number;
 }
@@ -212,6 +213,21 @@ function BrandForm({
             initial={brand?.logo_url ? [brand.logo_url] : []}
           />
         </div>
+
+        <Field
+          label="About the brand"
+          htmlFor="brand-description"
+          hint="Shown on the brand's page above its products. A few lines is plenty."
+          error={state.fieldErrors?.description}
+        >
+          <Textarea
+            id="brand-description"
+            name="description"
+            rows={4}
+            maxLength={2000}
+            defaultValue={brand?.description ?? ""}
+          />
+        </Field>
 
         <label className="flex items-center gap-2 text-sm text-ink">
           <input

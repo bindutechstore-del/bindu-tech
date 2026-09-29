@@ -18,7 +18,7 @@ export default async function AdminBrandsPage() {
 
   const { data } = await db
     .from("brands")
-    .select("id, name, slug, logo_url, is_active")
+    .select("id, name, slug, logo_url, description, is_active")
     .order("name");
   const brands = (data ?? []) as Omit<BrandRow, "productCount">[];
 

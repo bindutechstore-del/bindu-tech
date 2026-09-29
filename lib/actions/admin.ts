@@ -1772,6 +1772,7 @@ export async function recordCreditRepayment(
 
 const brandSchema = z.object({
   name: z.string().trim().min(1, "Enter a brand name").max(80),
+  description: z.string().trim().max(2000, "Keep it under 2,000 characters").optional().or(z.literal("")),
   slug: z.string().trim().max(80).optional().or(z.literal("")),
   logo_url: z
     .string()
@@ -1844,6 +1845,7 @@ export async function saveBrand(
   const row = {
     name,
     slug,
+    description: parsed.data.description || null,
     logo_url: parsed.data.logo_url || null,
     is_active: formData.get("is_active") === "on",
   };

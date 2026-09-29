@@ -80,7 +80,7 @@ export function BrandCarousel({ brands }: { brands: BrandTile[] }) {
         {brands.map((b) => (
           <Link
             key={b.id}
-            href={`/products?brand=${b.slug}`}
+            href={`/brands/${b.slug}`}
             className="relative flex aspect-[3/2] w-[calc(50%-0.375rem)] shrink-0 items-center justify-center overflow-hidden rounded-xl border border-line bg-surface transition-shadow hover:shadow-lift sm:w-[calc(33.333%-0.5rem)] lg:w-[calc(16.666%-0.625rem)]"
             aria-label={`${b.name} products`}
           >

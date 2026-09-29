@@ -39,7 +39,7 @@ export function BrandDirectory({ brands }: { brands: BrandTile[] }) {
           {shown.map((b) => (
             <li key={b.id}>
               <Link
-                href={`/products?brand=${b.slug}`}
+                href={`/brands/${b.slug}`}
                 className="group block overflow-hidden rounded-xl border border-line bg-surface transition-shadow hover:shadow-lift"
               >
                 <span className="relative flex aspect-[3/2] items-center justify-center">

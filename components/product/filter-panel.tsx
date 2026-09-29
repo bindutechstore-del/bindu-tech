@@ -25,14 +25,11 @@ export function FilterPanel({
   brands,
   query,
   resultCount,
-  sort,
 }: {
   categories: Category[];
   brands: Brand[];
   query: ProductQuery;
   resultCount: number;
-  /** Shown beside the Filters button on phones: [Filters] [Price: high to low ▾]. */
-  sort?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -61,8 +58,28 @@ export function FilterPanel({
     query.rating != null ? "rating" : null,
   ].filter(Boolean).length;
 
+  const sortLabel = SORTS.find((s) => s.value === query.sort)?.label ?? "Newest first";
+
   const body = (
     <div className="space-y-6">
+      {/* Sorting lives with the filters — one place to narrow and order the
+          list, one button on a phone — with price high/low first. */}
+      <FilterGroup title="Sort by">
+        <ul className="space-y-1">
+          {SORTS.map((s) => (
+            <li key={s.value}>
+              <FilterLink
+                active={query.sort === s.value}
+                pending={isPending}
+                onClick={() => setParam("sort", s.value === "newest" ? null : s.value)}
+              >
+                {s.label}
+              </FilterLink>
+            </li>
+          ))}
+        </ul>
+      </FilterGroup>
+
       <FilterGroup title="Category">
         <ul className="space-y-1">
           <li>
@@ -210,19 +227,19 @@ export function FilterPanel({
         </div>
       ) : null}
 
-      {/* Mobile toolbar: Filters and the sort order side by side, so price
-          high-to-low / low-to-high is one tap away without scrolling back up. */}
-      <div className="flex items-center gap-2 lg:hidden">
-        <Button variant="outline" onClick={() => setOpen(true)} className="shrink-0">
+      {/* Mobile: one Filters button for everything, sorting included. The
+          current order is named on it so it is clear without opening. */}
+      <div className="lg:hidden">
+        <Button variant="outline" onClick={() => setOpen(true)} block className="justify-start">
           <SlidersHorizontal />
           Filters
           {activeCount > 0 ? (
-            <span className="ml-1 rounded-full bg-brand-600 px-1.5 text-[11px] font-semibold text-white tabular">
+            <span className="rounded-full bg-brand-600 px-1.5 text-[11px] font-semibold text-white tabular">
               {activeCount}
             </span>
           ) : null}
+          <span className="ml-auto truncate text-xs font-normal text-ink-muted">{sortLabel}</span>
         </Button>
-        {sort ? <div className="min-w-0 flex-1">{sort}</div> : null}
       </div>
 
       {open ? (
@@ -235,7 +252,7 @@ export function FilterPanel({
           />
           <div className="absolute bottom-0 left-0 right-0 max-h-[85dvh] overflow-y-auto rounded-t-2xl bg-surface p-4">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-base font-semibold">Filters</h2>
+              <h2 className="text-base font-semibold">Sort &amp; filter</h2>
               <button
                 onClick={() => setOpen(false)}
                 className="inline-flex size-9 items-center justify-center rounded-lg hover:bg-surface-sunken"
@@ -262,6 +279,14 @@ export function FilterPanel({
     </>
   );
 }
+
+const SORTS: { value: ProductQuery["sort"]; label: string }[] = [
+  { value: "newest", label: "Newest first" },
+  { value: "price_asc", label: "Price: low to high" },
+  { value: "price_desc", label: "Price: high to low" },
+  { value: "popular", label: "Most popular" },
+  { value: "rating", label: "Top rated" },
+];
 
 function FilterGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (

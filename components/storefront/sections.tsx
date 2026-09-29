@@ -100,10 +100,9 @@ export function CategoryGrid({
 }: {
   categories: Category[];
   /**
-   * Homepage: one row at every screen size that swipes sideways to reach
-   * every other category (the product rails' `rail` strip), with "See all"
-   * for the full page. A grid of twelve used to fill two rows on a computer
-   * and four on a phone before the first product.
+   * Homepage: two rows that swipe sideways together to reach every other
+   * category — columns of two tiles flowing left to right — with "See all"
+   * for the full page.
    */
   oneRow?: boolean;
 }) {
@@ -111,7 +110,7 @@ export function CategoryGrid({
     <div
       className={
         oneRow
-          ? "rail -mx-4 flex scroll-px-4 gap-2 overflow-x-auto px-4 pb-1 sm:gap-3"
+          ? "rail -mx-4 grid scroll-px-4 auto-cols-[5.6rem] grid-flow-col grid-rows-2 gap-2 overflow-x-auto px-4 pb-1 sm:auto-cols-[8rem] sm:gap-3 lg:auto-cols-[9rem]"
           : "grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6"
       }
     >
@@ -127,7 +126,7 @@ export function CategoryGrid({
             className={`group flex flex-col items-center gap-2 rounded-xl border border-line bg-surface p-4 text-center transition-all hover:border-brand-200 hover:shadow-lift ${
               // Fixed widths so a sliver of the next tile shows at the edge —
               // the cue that the row swipes.
-              oneRow ? "w-[5.6rem] shrink-0 max-sm:gap-1.5 max-sm:p-2 sm:w-32 lg:w-36" : ""
+              oneRow ? "max-sm:gap-1.5 max-sm:p-2" : ""
             }`}
           >
             <span className="flex size-12 items-center justify-center rounded-full bg-brand-50 text-brand-600 transition-colors group-hover:bg-brand-600 group-hover:text-white">

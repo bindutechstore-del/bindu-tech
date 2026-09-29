@@ -96,9 +96,10 @@ SECTIONS = [
    "On a computer the bar is not shown."),
   ("A-007c", "Signed in as a customer, open Account and upload 'Your picture', then Save.",
    "Saved. Opening the menu shows the picture in the greeting card."),
-  ("A-007d", "On a phone, open All products.",
-   "'Filters' and the sort box sit side by side; choosing 'Price: high to low' or "
-   "'Price: low to high' re-orders the products."),
+  ("A-007d", "On a phone, open All products and tap the single 'Filters' button.",
+   "'Sort & filter' opens with 'Sort by' first: choosing 'Price: high to low' or "
+   "'Price: low to high' re-orders the products, and the button then shows the order. "
+   "On a computer the same 'Sort by' list heads the filter sidebar."),
   ("A-008", "Sign out from the admin panel.",
    "Returned to the storefront, signed out. Going back to /admin asks you to sign in again."),
  ],
@@ -151,8 +152,8 @@ SECTIONS = [
    "The tile falls back to its icon. No broken-image box anywhere."),
   ("C-014", "Try to upload a PDF or a text file as a category picture.",
    "Refused with 'use a JPG, PNG, WebP or AVIF picture'. Nothing is uploaded."),
-  ("C-014b", "On a phone, swipe the 'Shop by category' row sideways.",
-   "It scrolls through every main category, one row only."),
+  ("C-014b", "On a phone, swipe the 'Shop by category' section sideways.",
+   "Two rows of tiles move together, through every main category."),
   ("C-014a", "Open the homepage on a computer, then on a phone.",
    "'Shop by category' is ONE row either way -- six tiles on a computer, four on a "
    "phone or tablet. 'See all' opens an All categories page with every category."),
@@ -195,6 +196,10 @@ SECTIONS = [
    "'Our brands' shows the logos two at a time; swipe for more, the dots follow. "
    "'See all' opens the Brands page, where typing in 'Search brands' narrows the list "
    "and tapping a brand shows its products."),
+  ("BR-008c", "Edit a brand: write a few lines in 'About the brand' and save. Tap that brand "
+   "in 'Our brands' on the homepage.",
+   "Its page shows the logo, the text (long text folds with 'Read more') and "
+   "'Brand products'. A 'See all' link appears when it has more products than fit."),
   ("BR-009", "Open New product. Under Brand press 'New brand', type 'Walton' and press Enter.",
    "Walton is added and selected in the Brand list. The product itself is NOT saved yet "
    "and nothing you typed in the form is lost."),

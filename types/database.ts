@@ -95,6 +95,8 @@ export interface Brand {
   name: string;
   slug: string;
   logo_url: string | null;
+  /** A few lines about the maker, shown on its brand page (0027). */
+  description: string | null;
   is_active: boolean;
   created_at: string;
 }
