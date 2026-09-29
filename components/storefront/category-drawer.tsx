@@ -343,7 +343,8 @@ export function CategoryDrawer({
           {/* Always in view, whichever tab is open. */}
           <RequestProductButton
             onClick={close}
-            className="flex w-full items-center gap-3 rounded-lg border border-line bg-surface px-3 py-2.5 text-sm font-medium text-ink hover:border-brand-600 hover:text-brand-700"
+            // Same green button as Group Buy below it.
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-3 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 [&_svg]:size-4"
           />
           {PARTNER_LINKS.map(({ href, label, icon: Icon, tone }) => (
             <Link
