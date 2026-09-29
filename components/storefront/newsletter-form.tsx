@@ -31,7 +31,8 @@ export function NewsletterForm() {
           invalid={Boolean(state.error)}
         />
         <input type="hidden" name="source" value="footer" />
-        <Button type="submit" loading={pending}>
+        {/* The word is hidden on phones, so the button names itself. */}
+        <Button type="submit" loading={pending} aria-label="Subscribe">
           <Send />
           <span className="hidden sm:inline">Subscribe</span>
         </Button>

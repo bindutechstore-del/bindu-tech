@@ -23,6 +23,8 @@ import { Section, ProductRail } from "@/components/storefront/sections";
 import { Rating, Badge } from "@/components/ui/primitives";
 import { formatTaka } from "@/lib/utils/money";
 import type { SpecItem } from "@/types/database";
+import { JsonLd } from "@/components/seo/json-ld";
+import { absoluteUrl, breadcrumbJsonLd, metaDescription } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -31,17 +33,37 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
-  if (!product) return { title: "Product not found" };
+  if (!product) return { title: "Product not found", robots: { index: false } };
 
+  // "<name> price in Bangladesh" is how shoppers here search for a product,
+  // so the title says exactly that; the layout template adds "| Bindu Tech".
+  const { store_name } = await getStoreSettings();
+  const title = `${product.name} Price in Bangladesh`;
+  const price = formatTaka(product.price_paisa);
+  const blurb = product.short_description ?? product.description ?? "";
+  const description = metaDescription(
+    `Buy ${product.name} at the best price in Bangladesh: ${price} at ${store_name}.` +
+      (blurb ? ` ${blurb}` : " Warranty, cash on delivery and nationwide delivery."),
+  );
+  const images = product.images?.length
+    ? product.images.map((i) => ({ url: i.url, alt: i.alt ?? product.name }))
+    : product.thumbnail_url
+      ? [{ url: product.thumbnail_url, alt: product.name }]
+      : undefined;
   return {
-    title: product.name,
-    description:
-      product.short_description ?? product.description?.slice(0, 160) ?? undefined,
-    openGraph: {
-      title: product.name,
-      description: product.short_description ?? undefined,
-      images: product.thumbnail_url ? [product.thumbnail_url] : undefined,
-    },
+    title,
+    description,
+    keywords: [
+      `${product.name} price in Bangladesh`,
+      `${product.name} price in BD`,
+      product.name,
+      ...(product.brand ? [`${product.brand.name} price in Bangladesh`] : []),
+      ...(product.category ? [`${product.category.name} price in Bangladesh`] : []),
+      store_name,
+    ],
+    alternates: { canonical: `/products/${product.slug}` },
+    openGraph: { title: `${title} | ${store_name}`, description, url: `/products/${product.slug}`, images },
+    twitter: { card: "summary_large_image", title: `${title} | ${store_name}`, description },
   };
 }
 
@@ -96,21 +118,33 @@ export default async function ProductPage({
   const specs = (product.specifications ?? []) as SpecItem[];
 
   // Product JSON-LD so Google can render price and availability in results.
+  const productUrl = absoluteUrl(`/products/${product.slug}`);
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
+    "@id": `${productUrl}#product`,
     name: product.name,
-    image: product.thumbnail_url ? [product.thumbnail_url] : [],
-    description: product.short_description ?? product.description ?? "",
+    url: productUrl,
+    image: product.images?.length
+      ? product.images.map((i) => i.url)
+      : product.thumbnail_url
+        ? [product.thumbnail_url]
+        : [],
+    description: product.short_description ?? product.description ?? product.name,
     sku: product.sku,
+    ...(product.category ? { category: product.category.name } : {}),
     brand: product.brand ? { "@type": "Brand", name: product.brand.name } : undefined,
     offers: {
       "@type": "Offer",
+      url: productUrl,
       priceCurrency: "BDT",
       price: (product.price_paisa / 100).toFixed(2),
+      itemCondition: "https://schema.org/NewCondition",
       availability: inStock
         ? "https://schema.org/InStock"
         : "https://schema.org/OutOfStock",
+      seller: { "@type": "Organization", name: settings.store_name, url: absoluteUrl("/") },
+      areaServed: "BD",
     },
     aggregateRating:
       rating && product.rating_count
@@ -124,9 +158,18 @@ export default async function ProductPage({
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      <JsonLd
+        data={[
+          jsonLd,
+          breadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: "Products", path: "/products" },
+            ...(product.category
+              ? [{ name: product.category.name, path: `/products?category=${product.category.slug}` }]
+              : []),
+            { name: product.name, path: `/products/${product.slug}` },
+          ]),
+        ]}
       />
       <RecentlyViewedTracker productId={product.id} signedIn={Boolean(user)} />
 

@@ -11,6 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const { store_name } = await getStoreSettings();
   return {
     title: "Become a partner",
+    alternates: { canonical: "/be-partner" },
     description: `Retail, corporate supply and affiliate partnerships with ${store_name}.`,
   };
 }

@@ -4,8 +4,10 @@ import { getBrands } from "@/lib/queries/catalog";
 import { BrandDirectory } from "@/components/storefront/brand-directory";
 
 export const metadata: Metadata = {
-  title: "Our brands",
-  description: "Every brand in the shop — find one and see its products.",
+  title: "Top Gadget Brands in Bangladesh",
+  description:
+    "Shop Anker, Baseus, Fantech, Xiaomi and every other brand at Bindu Tech — original products at the best price in Bangladesh.",
+  alternates: { canonical: "/brands" },
 };
 
 /** Where the homepage "Our Brands" → See all goes. */

@@ -6,6 +6,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const { store_name } = await getStoreSettings();
   return {
     title: "Track your order",
+    alternates: { canonical: "/track" },
     description: `Enter your order number and mobile number to see exactly where your ${store_name} order is.`,
   };
 }

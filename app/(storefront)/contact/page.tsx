@@ -9,6 +9,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const { store_name } = await getStoreSettings();
   return {
     title: "Contact us",
+    alternates: { canonical: "/contact" },
     description: `Call, WhatsApp, Messenger or email ${store_name} — and where to find our counter in Dhaka.`,
   };
 }

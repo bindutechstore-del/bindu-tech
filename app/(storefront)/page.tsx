@@ -28,6 +28,13 @@ import {
 import { RailSkeleton, GridSkeleton } from "@/components/storefront/skeletons";
 import { EmptyState } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
+import type { Metadata } from "next";
+import { JsonLd } from "@/components/seo/json-ld";
+import { organizationJsonLd, websiteJsonLd } from "@/lib/seo";
+import type { StoreSettings } from "@/lib/queries/settings";
+
+// The title and description come from the root layout (store name first).
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 // The homepage is the same for everyone; regenerate it every 5 minutes rather
 // than querying Postgres on every visit. Flash-sale countdowns are client-side,
@@ -58,6 +65,8 @@ export default async function HomePage() {
 
   return (
     <>
+      {/* Who the shop is and the site search box, for Google. */}
+      <JsonLd data={[organizationJsonLd(settings), websiteJsonLd(settings)]} />
       <HeroCards
         banners={[...banners.hero, ...banners.categoryTiles]}
         heading={`${settings.store_name} — ${settings.store_tagline}`}
@@ -168,7 +177,54 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      <Suspense fallback={null}>
+        <AboutStoreBlock settings={settings} />
+      </Suspense>
     </>
+  );
+}
+
+/**
+ * A few plain sentences about the shop, with links into the main categories.
+ * Search engines rank a page for words that are actually on it; the rest of
+ * the homepage is product cards, so without this the words people search —
+ * "gadget shop in Bangladesh" — would appear nowhere.
+ */
+async function AboutStoreBlock({ settings }: { settings: StoreSettings }) {
+  const categories = (await getTopCategories()).slice(0, 12);
+  const name = settings.store_name;
+  return (
+    <section aria-labelledby="about-store" className="mx-auto max-w-7xl px-4 pb-14">
+      <div className="rounded-xl border border-line bg-surface p-6 sm:p-8">
+        <h2 id="about-store" className="text-lg font-bold tracking-tight text-ink">
+          {name} — online gadget &amp; electronics shop in Bangladesh
+        </h2>
+        <p className="mt-2 text-sm leading-7 text-ink-muted">
+          {name} (bindu.tech) is an online tech shop for customers all over Bangladesh, from
+          Dhaka and Chattogram to every district. Shop gadgets, electronics and everyday tech
+          accessories at fair prices, pay with cash on delivery, bKash or Nagad, and get
+          home delivery nationwide.
+        </p>
+        <p className="mt-2 text-sm leading-7 text-ink-muted">
+          Looking for the latest gadget price in Bangladesh? Every product page shows the
+          current price and stock, and our team is a call away at {settings.support_phone}.
+        </p>
+        {categories.length > 0 ? (
+          <nav aria-label="Popular categories" className="mt-4 flex flex-wrap gap-2">
+            {categories.map((c) => (
+              <Link
+                key={c.id}
+                href={`/products?category=${c.slug}`}
+                className="rounded-full border border-line px-3 py-1.5 text-sm text-ink-soft hover:border-brand-600 hover:text-brand-700"
+              >
+                {c.name}
+              </Link>
+            ))}
+          </nav>
+        ) : null}
+      </div>
+    </section>
   );
 }
 
@@ -247,7 +303,8 @@ async function RailsBlock({ storeName }: { storeName: string }) {
 
       {rails.featured.length > 0 ? (
         <Section title="Handpicked for you" href="/products?sort=newest">
-          <ProductGrid products={rails.featured} priorityCount={4} />
+          {/* Far below the fold: no preloads, they would compete with the hero. */}
+          <ProductGrid products={rails.featured} />
         </Section>
       ) : null}
     </>

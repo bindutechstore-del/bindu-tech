@@ -4,8 +4,10 @@ import { getCategories } from "@/lib/queries/catalog";
 import { CategoryGrid } from "@/components/storefront/sections";
 
 export const metadata: Metadata = {
-  title: "All categories",
-  description: "Every category in the shop, in one place.",
+  title: "Shop Gadgets & Electronics by Category",
+  description:
+    "Every Bindu Tech category in one place: chargers, power banks, audio, computer accessories, smart gadgets and more, at the best price in Bangladesh.",
+  alternates: { canonical: "/categories" },
 };
 
 /**

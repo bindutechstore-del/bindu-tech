@@ -4,17 +4,80 @@ import { SearchX } from "lucide-react";
 import { listProducts, getCategories, getBrands } from "@/lib/queries/catalog";
 import { parseProductQuery } from "@/lib/validations/catalog";
 import { getStoreSettings } from "@/lib/queries/settings";
+import { metaDescription } from "@/lib/seo";
 import { ProductGrid } from "@/components/storefront/sections";
 import { FilterPanel } from "@/components/product/filter-panel";
 import { LoadMoreProducts } from "@/components/product/load-more-products";
 import { EmptyState } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const { store_name } = await getStoreSettings();
+/**
+ * One listing route serves every category and brand, so the title follows
+ * the filter: "<Category> Price in Bangladesh" is what shoppers here search.
+ * Search results are not indexed (endless thin duplicates), and sort / price
+ * / page variations point back to the plain listing as their canonical.
+ */
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  const one = (k: string) => {
+    const v = params[k];
+    return ((Array.isArray(v) ? v[0] : v) ?? "").trim();
+  };
+  const [{ store_name }, categories, brands] = await Promise.all([
+    getStoreSettings(),
+    getCategories(),
+    getBrands(),
+  ]);
+
+  const q = one("q");
+  if (q) {
+    return {
+      title: `Search results for “${q.slice(0, 60)}”`,
+      robots: { index: false, follow: true },
+      alternates: { canonical: "/products" },
+    };
+  }
+
+  const category = categories.find((c) => c.slug === one("category"));
+  if (category) {
+    const title = `${category.name} Price in Bangladesh`;
+    const url = `/products?category=${category.slug}`;
+    const description = metaDescription(
+      `Buy ${category.name} online at the best price in Bangladesh from ${store_name}. Compare prices, pay cash on delivery and get delivery anywhere in Bangladesh.`,
+    );
+    return {
+      title,
+      description,
+      keywords: [`${category.name} price in Bangladesh`, `${category.name} price in BD`, `buy ${category.name} online`, store_name],
+      alternates: { canonical: url },
+      openGraph: { title: `${title} | ${store_name}`, description, url },
+    };
+  }
+
+  const brand = brands.find((b) => b.slug === one("brand"));
+  if (brand) {
+    return {
+      title: `${brand.name} Products Price in Bangladesh`,
+      description: metaDescription(
+        `Shop ${brand.name} products at the best price in Bangladesh from ${store_name}, with cash on delivery nationwide.`,
+      ),
+      alternates: { canonical: `/brands/${brand.slug}` },
+    };
+  }
+
+  const title = "Gadgets & Electronics Price in Bangladesh";
+  const description = metaDescription(
+    `Shop every gadget at ${store_name}: chargers, power banks, earbuds, smart watches, keyboards and more at the best price in Bangladesh. Cash on delivery nationwide.`,
+  );
   return {
-    title: "All products",
-    description: `Browse every gadget ${store_name} stocks — filter by category, brand and price.`,
+    title,
+    description,
+    alternates: { canonical: "/products" },
+    openGraph: { title: `${title} | ${store_name}`, description, url: "/products" },
   };
 }
 
@@ -141,7 +204,9 @@ export default async function ProductsPage({
             />
           ) : (
             <>
-              <ProductGrid products={products} priorityCount={5} />
+              {/* The cards are h3s; this keeps the outline h1 → h2 → h3. */}
+              <h2 className="sr-only">Products</h2>
+              <ProductGrid products={products} priorityCount={2} />
               <LoadMoreProducts
                 query={listingQuery}
                 initialNextPage={page < pageCount ? page + 1 : null}

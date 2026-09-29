@@ -46,11 +46,11 @@ export interface StoreSettings {
 
 /** Used when the settings row is missing so the UI still renders sensibly. */
 const FALLBACK: StoreSettings = {
-  store_name: "Nazmul",
+  store_name: "Bindu Tech",
   logo_url: "",
-  store_tagline: "Electronics, honestly priced.",
+  store_tagline: "Gadget & Electronics Shop in Bangladesh",
   store_description:
-    "Nazmul is a Dhaka-based electronics retailer delivering nationwide.",
+    "Bindu Tech is an online gadget & electronics shop in Bangladesh. Buy chargers, power banks, earbuds, smart watches & more with warranty and cash on delivery.",
   support_phone: "+8801812345678",
   support_whatsapp: "+8801812345678",
   support_email: "support@nazmul.com.bd",

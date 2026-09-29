@@ -70,7 +70,9 @@ export function HeroCards({
                 lg:basis-[23.5%] xl:basis-[19.5%]
               "
             >
-              <CampaignCard banner={b} priority={i < 3} />
+              {/* Two cards fill a phone screen; preloading a third only
+                  slowed the two the visitor actually sees. */}
+              <CampaignCard banner={b} priority={i < 2} />
             </li>
           ))}
         </HeroRail>

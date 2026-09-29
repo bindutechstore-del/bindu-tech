@@ -28,7 +28,11 @@ export async function generateMetadata({
   const raw = getContentPage(slug);
   if (!raw) return { title: "Not found" };
   const page = withStoreName(raw, (await getStoreSettings()).store_name);
-  return { title: page.title, description: page.description };
+  return {
+    title: page.title,
+    description: page.description,
+    alternates: { canonical: `/${slug}` },
+  };
 }
 
 export default async function ContentPageRoute({

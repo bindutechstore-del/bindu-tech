@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getStoreSettings } from "@/lib/queries/settings";
+import type { Metadata } from "next";
+
+// Sign-in, sign-up and password pages have nothing to rank for.
+export const metadata: Metadata = { robots: { index: false, follow: true } };
 
 export default async function AuthLayout({
   children,

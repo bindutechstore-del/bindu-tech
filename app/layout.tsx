@@ -14,6 +14,7 @@ import { Toaster } from "sonner";
 import { getStoreSettings } from "@/lib/queries/settings";
 import "./globals.css";
 import { siteUrl } from "@/lib/utils/site-url";
+import { SITE_KEYWORDS } from "@/lib/seo";
 
 /**
  * Three faces, each with a job.
@@ -98,6 +99,11 @@ const bengali = Hind_Siliguri({
   weight: ["400", "500", "600", "700"],
   variable: "--font-bengali",
   display: "swap",
+  // Not preloaded: four files (~130 KB) that most pages never use. The
+  // unicode-range in its @font-face means the browser fetches it the moment
+  // Bengali text is on screen, and never otherwise — preloading it made every
+  // page download it first and pushed the hero image back by ~0.7 s on 4G.
+  preload: false,
 });
 
 const FONT_VARS: Record<string, string> = {
@@ -123,22 +129,37 @@ export async function generateMetadata(): Promise<Metadata> {
   const s = await getStoreSettings();
   const site = siteUrl();
 
+  // The store name leads the home title and ends every other one, so the
+  // brand keyword is in every result Google shows.
+  const homeTitle = `${s.store_name} — ${s.store_tagline}`;
   return {
     metadataBase: new URL(site),
     title: {
-      default: `${s.store_name} — ${s.store_tagline}`,
-      template: `%s · ${s.store_name}`,
+      default: homeTitle,
+      template: `%s | ${s.store_name}`,
     },
     description: s.store_description,
+    keywords: SITE_KEYWORDS,
+    applicationName: s.store_name,
+    publisher: s.store_name,
+    creator: s.store_name,
+    category: "technology",
+    formatDetection: { telephone: false, address: false, email: false },
     openGraph: {
       type: "website",
       siteName: s.store_name,
-      title: `${s.store_name} — ${s.store_tagline}`,
+      title: homeTitle,
       description: s.store_description,
+      url: site,
       locale: "en_BD",
     },
-    twitter: { card: "summary_large_image" },
-    robots: { index: true, follow: true },
+    twitter: { card: "summary_large_image", title: homeTitle, description: s.store_description },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 },
+    },
+    other: { "geo.region": "BD", "geo.placename": "Bangladesh" },
   };
 }
 

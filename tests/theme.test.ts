@@ -50,7 +50,7 @@ describe("themeToCss", () => {
       ...DEFAULT_THEME,
       colors: { ...DEFAULT_THEME.colors, ink: "#f2f4f8", surface: "#0b0f1a" },
     });
-    expect(css).toContain("--color-ink-muted:color-mix(in srgb, #f2f4f8 60%, #0b0f1a)");
+    expect(css).toContain("--color-ink-muted:color-mix(in srgb, #f2f4f8 70%, #0b0f1a)");
     expect(css).toContain("--color-surface-raised:#0b0f1a");
   });
 });

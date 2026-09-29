@@ -218,8 +218,9 @@ export function themeToCss(theme: SiteTheme): string {
   if (c.ink !== d.ink || c.surface !== d.surface) {
     vars.push(
       `--color-ink-soft:${mix(c.ink, 80, c.surface)}`,
-      `--color-ink-muted:${mix(c.ink, 60, c.surface)}`,
-      `--color-ink-faint:${mix(c.ink, 42, c.surface)}`,
+      // 70% / 64% keep both greys at 4.5:1 or better against the surface.
+      `--color-ink-muted:${mix(c.ink, 70, c.surface)}`,
+      `--color-ink-faint:${mix(c.ink, 64, c.surface)}`,
       `--color-line:${mix(c.ink, 11, c.surface)}`,
       `--color-line-strong:${mix(c.ink, 20, c.surface)}`,
       `--color-surface-raised:${c.surface}`,

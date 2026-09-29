@@ -27,8 +27,10 @@
 
   --color-ink: #14161a;
   --color-ink-soft: #3d434d;
-  --color-ink-muted: #6b7280;
-  --color-ink-faint: #9aa1ad;
+  /* Both pass WCAG AA (4.5:1) for small text on white and on the sunken
+     grey: struck-through prices and captions use them at 11–12px. */
+  --color-ink-muted: #565d6a;
+  --color-ink-faint: #636b78;
 
   --color-surface: #ffffff;
   --color-surface-sunken: #f7f7f5;

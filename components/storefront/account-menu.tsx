@@ -77,6 +77,9 @@ export function AccountMenu({ name, isStaff = false }: { name: string | null; is
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-haspopup="menu"
+        // Icon-only on phones. Starts with the visible text on desktop (the
+        // name, or "Account") so the spoken and shown labels agree.
+        aria-label={`${name ?? "Account"} menu`}
         className="inline-flex h-10 items-center gap-1.5 rounded-lg px-2.5 text-ink-soft hover:bg-surface-sunken"
       >
         <User size={19} />

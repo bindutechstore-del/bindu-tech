@@ -47,13 +47,17 @@ export function MobileTabBar({ cartCount }: { cartCount: number }) {
         <Link
           href="/cart"
           className={`${item} ${on(pathname === "/cart")}`}
-          aria-label={cartCount > 0 ? `Cart, ${cartCount} items` : "Cart, empty"}
         >
+          {/* Named by what it shows ("Cart", or "3 Cart"): an aria-label that
+              differs from the visible text confuses voice control. An empty
+              cart shows no badge at all. */}
           <span className="relative">
-            <ShoppingBag size={21} strokeWidth={pathname === "/cart" ? 2.4 : 1.8} />
-            <span className="absolute -right-2.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-ink px-1 text-[10px] font-semibold text-white tabular">
-              {cartCount > 99 ? "99+" : cartCount}
-            </span>
+            <ShoppingBag size={21} strokeWidth={pathname === "/cart" ? 2.4 : 1.8} aria-hidden />
+            {cartCount > 0 ? (
+              <span className="absolute -right-2.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-ink px-1 text-[10px] font-semibold text-white tabular">
+                {cartCount > 99 ? "99+" : cartCount}
+              </span>
+            ) : null}
           </span>
           Cart
         </Link>

@@ -10,6 +10,8 @@ import { BrandLogo } from "@/components/storefront/brand-carousel";
 import { ReadMore } from "@/components/storefront/read-more";
 import { EmptyState } from "@/components/ui/primitives";
 import type { Brand } from "@/types/database";
+import { getStoreSettings } from "@/lib/queries/settings";
+import { metaDescription } from "@/lib/seo";
 
 const getBrand = cache(async (slug: string): Promise<Brand | null> => {
   const supabase = await createClient();
@@ -28,10 +30,24 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const brand = await getBrand((await params).slug);
-  if (!brand) return { title: "Brand not found" };
+  if (!brand) return { title: "Brand not found", robots: { index: false } };
+  const { store_name } = await getStoreSettings();
+  const title = `${brand.name} Price in Bangladesh`;
+  const description = metaDescription(
+    `Buy ${brand.name} products at the best price in Bangladesh from ${store_name}. ` +
+      (brand.description ?? "Cash on delivery and nationwide delivery."),
+  );
   return {
-    title: brand.name,
-    description: brand.description?.slice(0, 160) ?? `${brand.name} products`,
+    title,
+    description,
+    keywords: [`${brand.name} price in Bangladesh`, `${brand.name} price in BD`, `${brand.name} Bangladesh`, store_name],
+    alternates: { canonical: `/brands/${brand.slug}` },
+    openGraph: {
+      title: `${title} | ${store_name}`,
+      description,
+      url: `/brands/${brand.slug}`,
+      ...(brand.logo_url ? { images: [{ url: brand.logo_url, alt: brand.name }] } : {}),
+    },
   };
 }
 

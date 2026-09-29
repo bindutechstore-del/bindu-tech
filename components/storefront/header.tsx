@@ -60,7 +60,9 @@ export async function Header() {
           isStaff={isStaffRole(user?.role)}
         />
 
-        <Link href="/" className="flex shrink-0 flex-col" aria-label={`${settings.store_name} home`}>
+        {/* Named by its content (the logo's alt text), so what is read out
+            matches what is shown. */}
+        <Link href="/" className="flex shrink-0 flex-col">
           {/* The uploaded logo when there is one (admin → Settings), else the
               name as text. */}
           {settings.logo_url ? (
