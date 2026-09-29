@@ -162,12 +162,12 @@ export function OfferCards({ banners }: { banners: Banner[] }) {
         <div
           key={b.id}
           className="relative overflow-hidden rounded-xl border border-line bg-surface p-5"
-          style={{ borderLeftWidth: 3, borderLeftColor: b.accent_hex ?? "#1b4dff" }}
+          style={{ borderLeftWidth: 3, borderLeftColor: b.accent_hex ?? "#016952" }}
         >
           {b.eyebrow ? (
             <span
               className="text-[11px] font-semibold uppercase tracking-wide"
-              style={{ color: b.accent_hex ?? "#1b4dff" }}
+              style={{ color: b.accent_hex ?? "#016952" }}
             >
               {b.eyebrow}
             </span>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Phone, Mail, MapPin, Clock } from "lucide-react";
 import { SocialIcon } from "./social-icon";
+import { RequestProductButton } from "./request-product";
 import { getStoreSettings, getDeliveryZones } from "@/lib/queries/settings";
 import { getCategories } from "@/lib/queries/catalog";
 import { NewsletterForm } from "./newsletter-form";
@@ -124,6 +125,9 @@ export async function Footer() {
                 </Link>
               </li>
             ))}
+            <li>
+              <RequestProductButton className="inline-flex items-center gap-1.5 text-ink-muted hover:text-brand-700 [&_svg]:size-4" />
+            </li>
           </ul>
         </div>
 

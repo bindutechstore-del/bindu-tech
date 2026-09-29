@@ -91,11 +91,18 @@ SECTIONS = [
    "Each click responds at once with a grey loading outline, and the page fills in "
    "shortly after (about a second or less on normal mobile data). No click feels frozen."),
   ("A-007b", "On a phone, check the bottom bar: Home, Menu, Cart, Search, Account.",
-   "Menu opens the side menu with a 'Hello there! Sign in' card (or your picture and "
-   "name when signed in); Search jumps to the search box; Cart shows the item count. "
-   "On a computer the bar is not shown."),
-  ("A-007c", "Signed in as a customer, open Account and upload 'Your picture', then Save.",
-   "Saved. Opening the menu shows the picture in the greeting card."),
+   "Menu opens the side menu (headed 'Browse'); Search jumps to the search box; Cart "
+   "shows the item count. On a computer the bar is not shown."),
+  ("A-007c", "Open the menu and tap 'Request a Product' (also in the footer under Help). "
+   "Fill name, email, product name and send.",
+   "'Request sent'. In admin, 'Product requests' shows a badge count, and the request is "
+   "listed under New with the customer's email / phone / WhatsApp links."),
+  ("A-007e", "In Product requests, change a request's status to Contacted, then Sourced; "
+   "delete one.",
+   "It moves between the New / Contacted / Sourced / Closed tabs; the badge counts only "
+   "New. Deleted requests disappear."),
+  ("A-007f", "Send more than 5 requests with the same email in one day.",
+   "The sixth is refused politely; the first five are listed."),
   ("A-007d", "On a phone, open All products and tap the single 'Filters' button.",
    "'Sort & filter' opens with 'Sort by' first: choosing 'Price: high to low' or "
    "'Price: low to high' re-orders the products, and the button then shows the order. "
@@ -657,8 +664,14 @@ SECTIONS = [
  [
   ("G-001", "Open Design. Drag a colour picker.",
    "The live preview on the right updates instantly, without saving."),
+  ("G-000", "Open the storefront.",
+   "The header shows the Bindu Tech logo, and buttons, links and the phone navbar use the "
+   "logo green (#016952). The browser tab shows the green logo icon."),
+  ("G-000a", "In Settings -> Store, replace the Logo with another picture and save.",
+   "The header shows the new logo. Removing it (X) and saving shows the store name "
+   "as text instead."),
   ("G-001a", "Look at the 'Brand palette' card.",
-   "Eleven colours with their Bangla names and codes: Midnight navy #0B0F1A, Dark slate "
+   "Twelve colours: Bindu green #016952 first, then Midnight navy #0B0F1A, Dark slate "
    "#151B2B, Violet #6C5CE7, Neon cyan #00E5FF, Off-white #F2F4F8, Deep navy #0F172A, "
    "Orange #FF6A00, Light grey #F3F4F6, Jet black #111111, Crimson red #FF2E4D, "
    "Yellow #FFD400."),

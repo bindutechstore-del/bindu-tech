@@ -22,6 +22,7 @@ import {
   CreditCard,
   ShieldCheck,
   Tag,
+  PackagePlus,
 } from "lucide-react";
 import type { AdminPermission } from "@/lib/auth/permissions";
 import { cn } from "@/lib/utils/cn";
@@ -54,6 +55,7 @@ const SECTIONS: {
       { href: "/admin/products", label: "Products", icon: Package, permission: "products" },
       { href: "/admin/categories", label: "Categories", icon: FolderTree, permission: "categories" },
       { href: "/admin/brands", label: "Brands", icon: Tag, permission: "products" },
+      { href: "/admin/requests", label: "Product requests", icon: PackagePlus, permission: "products" },
       { href: "/admin/stock", label: "Stock", icon: Truck, permission: "stock" },
     ],
   },
@@ -90,11 +92,14 @@ export function AdminNav({
   permissions,
   storeName,
   pendingPayments = 0,
+  newRequests = 0,
 }: {
   permissions: AdminPermission[];
   storeName: string;
   /** Manual transfers awaiting a decision — worth a badge, it blocks dispatch. */
   pendingPayments?: number;
+  /** Product requests nobody has looked at yet. */
+  newRequests?: number;
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
@@ -125,7 +130,12 @@ export function AdminNav({
                   l.href === "/admin"
                     ? pathname === "/admin"
                     : pathname.startsWith(l.href);
-                const badge = l.href === "/admin/payments" ? pendingPayments : 0;
+                const badge =
+                  l.href === "/admin/payments"
+                    ? pendingPayments
+                    : l.href === "/admin/requests"
+                      ? newRequests
+                      : 0;
 
                 return (
                   <Link

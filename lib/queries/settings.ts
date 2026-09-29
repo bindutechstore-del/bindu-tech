@@ -17,6 +17,8 @@ import {
 
 export interface StoreSettings {
   store_name: string;
+  /** The shop's logo, shown in the header instead of the name (admin → Settings). */
+  logo_url: string;
   store_tagline: string;
   store_description: string;
   support_phone: string;
@@ -45,6 +47,7 @@ export interface StoreSettings {
 /** Used when the settings row is missing so the UI still renders sensibly. */
 const FALLBACK: StoreSettings = {
   store_name: "Nazmul",
+  logo_url: "",
   store_tagline: "Electronics, honestly priced.",
   store_description:
     "Nazmul is a Dhaka-based electronics retailer delivering nationwide.",

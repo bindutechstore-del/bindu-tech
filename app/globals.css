@@ -8,21 +8,22 @@
  * not be one.
  *
  * The palette is built around the electric blue already used by the seeded hero
- * banners (#1B4DFF) so admin-authored accents and the chrome agree. Neutrals are
+ * banners (#016952, the logo green) so admin-authored accents and the chrome agree. Neutrals are
  * warm rather than pure grey — a cool grey next to a ৳ sign reads as a spec
  * sheet, not a shop.
  */
 @theme {
-  --color-brand-50: #eef2ff;
-  --color-brand-100: #e0e7ff;
-  --color-brand-200: #c7d2fe;
-  --color-brand-300: #a5b4fc;
-  --color-brand-400: #7c8cfa;
-  --color-brand-500: #4f63f5;
-  --color-brand-600: #1b4dff;
-  --color-brand-700: #1739cc;
-  --color-brand-800: #172ea3;
-  --color-brand-900: #1a2b80;
+  /* Bindu Tech green, from the logo: #016952 at 600. */
+  --color-brand-50: #e7f4f0;
+  --color-brand-100: #cfe9e1;
+  --color-brand-200: #a3d4c5;
+  --color-brand-300: #6fb9a4;
+  --color-brand-400: #36977d;
+  --color-brand-500: #0f7f64;
+  --color-brand-600: #016952;
+  --color-brand-700: #015443;
+  --color-brand-800: #034437;
+  --color-brand-900: #05382e;
 
   --color-ink: #14161a;
   --color-ink-soft: #3d434d;

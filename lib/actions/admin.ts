@@ -663,7 +663,7 @@ export async function saveBanner(
 
   const accent = get("accent_hex");
   if (accent && !/^#[0-9a-fA-F]{6}$/.test(accent)) {
-    return { ok: false, error: "Accent must be a hex colour like #1B4DFF." };
+    return { ok: false, error: "Accent must be a hex colour like #016952." };
   }
 
   // The hero renders through next/image, which throws for a host it has not
@@ -791,6 +791,7 @@ export async function saveSetting(
  * exist: a crafted form cannot invent keys.
  */
 const CONTENT_SETTINGS: Record<string, string> = {
+  logo_url: "The shop's logo, shown in the header",
   home_highlights: "Homepage “Buying from” cards",
   home_delivery_note: "Homepage Delivery card text (empty = written from the delivery zones)",
   social_links: "Footer social links",
@@ -854,6 +855,10 @@ export async function saveSettings(
       fieldErrors[key] = "The store needs a name.";
       continue;
     }
+    if (key === "logo_url" && text && !(/^https:\/\/\S+$/i.test(text) && isServableImageHost(text))) {
+      fieldErrors[key] = "Upload the logo here rather than linking it.";
+      continue;
+    }
     if (key === "support_email" && text && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text)) {
       // The footer turns this into a mailto: link; "bindutech.com" made one
       // that opened an email to nobody.
@@ -861,6 +866,11 @@ export async function saveSettings(
       continue;
     }
     writes.push({ key, value });
+  }
+
+  // Logo removed with the X: the uploader posts only its marker, no URL.
+  if (formData.has("setting__logo_url__on") && !formData.has("setting__logo_url")) {
+    writes.push({ key: "logo_url", value: "" });
   }
 
   // ── Social links (footer icons, chat bubble) ──────────────────────────────

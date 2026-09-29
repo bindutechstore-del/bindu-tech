@@ -26,7 +26,7 @@ export function Hero({ banners }: { banners: Banner[] }) {
 
   if (count === 0) return null;
   const active = banners[index]!;
-  const accent = active.accent_hex ?? "#1b4dff";
+  const accent = active.accent_hex ?? "#016952";
 
   return (
     <section

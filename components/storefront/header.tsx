@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Phone, Heart, Package, Percent, ArrowRight, type LucideIcon } from "lucide-react";
 import * as Icons from "lucide-react";
 import { getCategories } from "@/lib/queries/catalog";
@@ -53,20 +54,30 @@ export async function Header() {
       </div>
 
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4">
-        <CategoryDrawer
-          categories={categories}
-          signedIn={Boolean(user)}
-          userName={user?.profile?.full_name?.split(" ")[0] ?? null}
-          avatarUrl={user?.profile?.avatar_url ?? null}
-        />
+        <CategoryDrawer categories={categories} signedIn={Boolean(user)} />
 
-        <Link href="/" className="flex shrink-0 flex-col">
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-xl font-bold tracking-tight text-ink">
-              {settings.store_name}
+        <Link href="/" className="flex shrink-0 flex-col" aria-label={`${settings.store_name} home`}>
+          {/* The uploaded logo when there is one (admin → Settings), else the
+              name as text. */}
+          {settings.logo_url ? (
+            <span className="relative block h-8 w-[132px] sm:h-9 sm:w-[150px]">
+              <Image
+                src={settings.logo_url}
+                alt={settings.store_name}
+                fill
+                priority
+                sizes="150px"
+                className="object-contain object-left"
+              />
             </span>
-            <span className="hidden h-1.5 w-1.5 rounded-full bg-brand-600 sm:block" />
-          </div>
+          ) : (
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-xl font-bold tracking-tight text-ink">
+                {settings.store_name}
+              </span>
+              <span className="hidden h-1.5 w-1.5 rounded-full bg-brand-600 sm:block" />
+            </div>
+          )}
           <span className="text-[9px] leading-tight tracking-wide text-ink-faint">
             Developed by Nafis Hossain Momen
           </span>

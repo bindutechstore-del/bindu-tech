@@ -84,7 +84,7 @@ export function BannerManager({ banners }: { banners: Banner[] }) {
             ) : (
               <div
                 className="h-3"
-                style={{ background: b.accent_hex ?? "#1b4dff" }}
+                style={{ background: b.accent_hex ?? "#016952" }}
               />
             )}
 
@@ -200,13 +200,13 @@ function BannerForm({
           <Field
             label="Accent colour"
             htmlFor="accent_hex"
-            hint="Hex, e.g. #1B4DFF — tints the hero gradient"
+            hint="Hex, e.g. #016952 — tints the hero gradient"
           >
             <Input
               id="accent_hex"
               name="accent_hex"
               defaultValue={banner?.accent_hex ?? ""}
-              placeholder="#1B4DFF"
+              placeholder="#016952"
             />
           </Field>
 

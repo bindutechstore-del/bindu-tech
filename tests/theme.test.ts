@@ -56,8 +56,9 @@ describe("themeToCss", () => {
 });
 
 describe("BRAND_PALETTE", () => {
-  it("holds the client's eleven colours, each a valid theme colour", () => {
-    expect(BRAND_PALETTE).toHaveLength(11);
+  it("holds the logo green plus the client's eleven colours, each a valid theme colour", () => {
+    expect(BRAND_PALETTE).toHaveLength(12);
+    expect(BRAND_PALETTE[0].hex).toBe("#016952");
     for (const p of BRAND_PALETTE) {
       const t = sanitiseTheme({ colors: { brand600: p.hex } });
       expect(t.colors.brand600).toBe(p.hex);

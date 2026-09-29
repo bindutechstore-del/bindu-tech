@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input, Textarea, Select, Field } from "@/components/ui/field";
 import { Card, Badge } from "@/components/ui/primitives";
+import { ImageUploader } from "./image-uploader";
 
 const initial: AdminState = { ok: false };
 
@@ -91,6 +92,7 @@ const HANDLED = new Set([
   "home_highlights",
   "social_links",
   "site_theme", // Design page
+  "logo_url", // Store card, as an upload
   "supabase_url", // internal
   // "Checkout & rewards" below
   "advance_payment",
@@ -254,6 +256,31 @@ export function SettingsForm({
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             {g.keys.filter((k) => byKey.has(k)).map(field)}
           </div>
+          {g.title === "Store" ? (
+            <div className="mt-4">
+              <p className="text-sm font-medium text-ink">Logo</p>
+              <p className="mb-2 text-xs text-ink-muted">
+                Shown in the header instead of the store name. A wide logo on a transparent
+                background (PNG) looks best.
+              </p>
+              <div className="max-w-xs">
+                <ImageUploader
+                  name="setting__logo_url"
+                  bucket="banners"
+                  folder="brand"
+                  single
+                  label="logo"
+                  maxEdge={1200}
+                  initial={byKey.get("logo_url")?.value ? [String(byKey.get("logo_url")?.value)] : []}
+                />
+              </div>
+              {errors.logo_url ? (
+                <p role="alert" className="mt-1 text-xs text-danger">
+                  {errors.logo_url}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
         </Card>
       ))}
 

@@ -6,6 +6,8 @@ import { NavProgress } from "@/components/ui/nav-progress";
 import { getStoreSettings } from "@/lib/queries/settings";
 import { getRequestCartQuote } from "@/lib/cart/quote";
 import { MobileTabBar } from "@/components/storefront/mobile-tab-bar";
+import { RequestProductDialog } from "@/components/storefront/request-product";
+import { getSessionUser } from "@/lib/auth/session";
 
 export default async function StorefrontLayout({
   children,
@@ -16,7 +18,12 @@ export default async function StorefrontLayout({
   // changing the phone or WhatsApp number in Settings changed the footer but
   // not the button customers actually tap. Settings first; the old variables
   // stay as a fallback. (Same cached read the header and footer make.)
-  const [settings, quote] = await Promise.all([getStoreSettings(), getRequestCartQuote()]);
+  // getSessionUser is cached per request; the header already calls it.
+  const [settings, quote, user] = await Promise.all([
+    getStoreSettings(),
+    getRequestCartQuote(),
+    getSessionUser(),
+  ]);
 
   return (
     // Bottom padding on phones so the fixed navbar never covers the footer.
@@ -30,6 +37,11 @@ export default async function StorefrontLayout({
       <main className="flex-1">{children}</main>
       <Footer />
       <MobileTabBar cartCount={quote.item_count} />
+      <RequestProductDialog
+        defaultName={user?.profile?.full_name ?? ""}
+        defaultEmail={user?.email ?? ""}
+        defaultPhone={user?.profile?.phone ?? ""}
+      />
       <SupportWidget
         phone={settings.support_phone || process.env.NEXT_PUBLIC_SUPPORT_PHONE}
         whatsapp={settings.support_whatsapp || process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP}

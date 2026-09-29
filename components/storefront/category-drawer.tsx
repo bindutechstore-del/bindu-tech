@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   Menu,
@@ -27,6 +26,7 @@ import {
 } from "lucide-react";
 import type { Category } from "@/types/database";
 import { OPEN_BROWSE_EVENT } from "./mobile-tab-bar";
+import { RequestProductButton } from "./request-product";
 
 type NavItem = { href: string; label: string; icon: LucideIcon };
 
@@ -76,17 +76,11 @@ const PARTNER_LINKS: {
 export function CategoryDrawer({
   categories,
   signedIn = false,
-  userName = null,
-  avatarUrl = null,
   variant = "icon",
 }: {
   categories: Category[];
   /** Swaps the ACCOUNT section between Sign In/Register and account links. */
   signedIn?: boolean;
-  /** First name for the greeting card at the top. */
-  userName?: string | null;
-  /** The customer's own picture, uploaded on their account page. */
-  avatarUrl?: string | null;
   /**
    * "icon" is the mobile hamburger, "bar" the desktop Categories button.
    * The header renders both; only one is visible at a breakpoint, so the two
@@ -149,36 +143,11 @@ export function CategoryDrawer({
         className="absolute inset-y-0 left-0 flex w-[86%] max-w-sm flex-col bg-surface shadow-pop"
         aria-label="Browse"
       >
-        {/* Greeting card: the customer's picture and name, or an invitation
-            to sign in — the first thing in the menu, as on the client's
-            reference. */}
-        <div className="flex shrink-0 items-center gap-2 p-3">
-          <Link
-            href={signedIn ? "/account" : "/sign-in"}
-            onClick={close}
-            className="flex min-w-0 flex-1 items-center gap-3 rounded-xl bg-brand-600 px-3 py-2.5 text-white hover:bg-brand-700"
-          >
-            <span className="relative flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/90 text-brand-600">
-              {avatarUrl ? (
-                <Image src={avatarUrl} alt="" fill sizes="44px" className="object-cover" />
-              ) : signedIn && userName ? (
-                <span className="text-lg font-bold">{userName.slice(0, 1).toUpperCase()}</span>
-              ) : (
-                <User size={22} />
-              )}
-            </span>
-            <span className="min-w-0 leading-tight">
-              <span className="block truncate text-base font-semibold">
-                {signedIn ? `Hello, ${userName || "there"}!` : "Hello there!"}
-              </span>
-              <span className="block text-sm text-white/85">
-                {signedIn ? "My account" : "Sign in"}
-              </span>
-            </span>
-          </Link>
+        <div className="flex h-14 shrink-0 items-center justify-between border-b border-line px-4">
+          <span className="text-base font-bold tracking-tight text-ink">Browse</span>
           <button
             onClick={close}
-            className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-ink-soft hover:bg-surface-sunken"
+            className="inline-flex size-9 items-center justify-center rounded-lg text-ink-soft hover:bg-surface-sunken"
             aria-label="Close menu"
           >
             <X size={18} />
@@ -353,6 +322,11 @@ export function CategoryDrawer({
             three partner routes read as calls to action rather than as three
             more list items competing with the nav above. */}
         <div className="shrink-0 space-y-1.5 border-t border-line bg-surface-sunken/60 p-3">
+          {/* Always in view, whichever tab is open. */}
+          <RequestProductButton
+            onClick={close}
+            className="flex w-full items-center gap-3 rounded-lg border border-line bg-surface px-3 py-2.5 text-sm font-medium text-ink hover:border-brand-600 hover:text-brand-700"
+          />
           {PARTNER_LINKS.map(({ href, label, icon: Icon, tone }) => (
             <Link
               key={href}

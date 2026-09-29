@@ -443,6 +443,16 @@ export async function countPendingManualPayments(): Promise<number> {
   return error ? 0 : (count ?? 0);
 }
 
+/** Product requests still marked "new", for the admin nav badge. */
+export async function countNewProductRequests(): Promise<number> {
+  const db = createAdminClient();
+  const { count, error } = await db
+    .from("product_requests")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "new");
+  return error ? 0 : (count ?? 0);
+}
+
 // ── Staff ───────────────────────────────────────────────────────────────────
 
 export interface StaffMember {

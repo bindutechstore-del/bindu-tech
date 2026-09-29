@@ -86,7 +86,7 @@ function CampaignCard({
   banner: Banner;
   priority?: boolean;
 }) {
-  const accent = b.accent_hex ?? "#1b4dff";
+  const accent = b.accent_hex ?? "#016952";
 
   return (
     <Link

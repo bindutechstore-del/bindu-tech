@@ -20,7 +20,7 @@ export function PromoTiles({ banners }: { banners: Banner[] }) {
   return (
     <div className="rail -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 sm:gap-4">
       {banners.map((b, i) => {
-        const accent = b.accent_hex ?? "#1b4dff";
+        const accent = b.accent_hex ?? "#016952";
 
         return (
           <Link

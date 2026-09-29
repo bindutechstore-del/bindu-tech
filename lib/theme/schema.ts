@@ -67,8 +67,8 @@ export const DEFAULT_THEME: SiteTheme = {
   // "Reset to default" restored colours that had never actually been the
   // design.
   colors: {
-    brand600: "#1b4dff",
-    brand700: "#1739cc",
+    brand600: "#016952",
+    brand700: "#015443",
     ink: "#14161a",
     surface: "#ffffff",
     surfaceSunken: "#f7f7f5",
@@ -88,6 +88,8 @@ export const DEFAULT_THEME: SiteTheme = {
  * labelled plainly as yellow.
  */
 export const BRAND_PALETTE: { hex: string; bn: string; en: string }[] = [
+  // The Bindu Tech logo green — the store's own colour.
+  { hex: "#016952", bn: "বিন্দু গ্রিন", en: "Bindu green" },
   { hex: "#0b0f1a", bn: "মিডনাইট নেভি", en: "Midnight navy" },
   { hex: "#151b2b", bn: "ডার্ক স্লেট", en: "Dark slate" },
   { hex: "#6c5ce7", bn: "ভায়োলেট", en: "Violet" },
