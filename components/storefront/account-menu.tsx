@@ -13,6 +13,7 @@ import {
   ShoppingBag,
   LogOut,
   ChevronDown,
+  ShieldCheck,
 } from "lucide-react";
 import { signOut } from "@/lib/actions/auth";
 
@@ -24,7 +25,7 @@ import { signOut } from "@/lib/actions/auth";
  * deliberately here too: most people chasing a parcel never made an account,
  * and hiding tracking behind a login is how you generate support calls.
  */
-export function AccountMenu({ name }: { name: string | null }) {
+export function AccountMenu({ name, isStaff = false }: { name: string | null; isStaff?: boolean }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
@@ -63,6 +64,8 @@ export function AccountMenu({ name }: { name: string | null }) {
     { href: "/account/wishlist", label: "Wishlist", icon: Heart },
     { href: "/account/addresses", label: "Addresses", icon: MapPin },
     { href: "/track", label: "Track Order", icon: Package },
+    // Staff only: the way into the back office from any screen size.
+    ...(isStaff ? [{ href: "/admin", label: "Admin panel", icon: ShieldCheck }] : []),
   ];
 
   const items = name ? signedIn : signedOut;

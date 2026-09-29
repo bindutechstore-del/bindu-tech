@@ -15,6 +15,7 @@ import {
   Truck,
   Handshake,
   LayoutGrid,
+  ShieldCheck,
   Home,
   Info,
   Mail,
@@ -76,11 +77,18 @@ const PARTNER_LINKS: {
 export function CategoryDrawer({
   categories,
   signedIn = false,
+  isStaff = false,
   variant = "icon",
 }: {
   categories: Category[];
   /** Swaps the ACCOUNT section between Sign In/Register and account links. */
   signedIn?: boolean;
+  /**
+   * Staff (admin or manager) get an "Admin panel" button — on a phone this is
+   * the way into /admin, since the Admin link in the category bar only shows
+   * from tablet width up. The panel itself still checks permissions.
+   */
+  isStaff?: boolean;
   /**
    * "icon" is the mobile hamburger, "bar" the desktop Categories button.
    * The header renders both; only one is visible at a breakpoint, so the two
@@ -322,6 +330,16 @@ export function CategoryDrawer({
             three partner routes read as calls to action rather than as three
             more list items competing with the nav above. */}
         <div className="shrink-0 space-y-1.5 border-t border-line bg-surface-sunken/60 p-3">
+          {isStaff ? (
+            <Link
+              href="/admin"
+              onClick={close}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-ink px-3 py-2.5 text-sm font-semibold text-white hover:bg-ink-soft"
+            >
+              <ShieldCheck size={17} />
+              Admin panel
+            </Link>
+          ) : null}
           {/* Always in view, whichever tab is open. */}
           <RequestProductButton
             onClick={close}

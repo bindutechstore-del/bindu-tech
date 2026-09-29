@@ -93,6 +93,10 @@ SECTIONS = [
   ("A-007b", "On a phone, check the bottom bar: Home, Menu, Cart, Search, Account.",
    "Menu opens the side menu (headed 'Browse'); Search jumps to the search box; Cart "
    "shows the item count. On a computer the bar is not shown."),
+  ("A-007g", "Signed in as the admin (or a manager), on a phone open the menu, and also "
+   "the account icon in the header.",
+   "Both show an 'Admin panel' button that opens the back office. Signed out, or as a "
+   "customer, neither shows it."),
   ("A-007c", "Open the menu and tap 'Request a Product' (also in the footer under Help). "
    "Fill name, email, product name and send.",
    "'Request sent'. In admin, 'Product requests' shows a badge count, and the request is "

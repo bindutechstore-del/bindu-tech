@@ -54,7 +54,11 @@ export async function Header() {
       </div>
 
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4">
-        <CategoryDrawer categories={categories} signedIn={Boolean(user)} />
+        <CategoryDrawer
+          categories={categories}
+          signedIn={Boolean(user)}
+          isStaff={isStaffRole(user?.role)}
+        />
 
         <Link href="/" className="flex shrink-0 flex-col" aria-label={`${settings.store_name} home`}>
           {/* The uploaded logo when there is one (admin → Settings), else the
@@ -100,6 +104,7 @@ export async function Header() {
 
           <AccountMenu
             name={user ? user.profile?.full_name?.split(" ")[0] ?? "Account" : null}
+            isStaff={isStaffRole(user?.role)}
           />
 
           <CartButton count={quote.item_count} />
