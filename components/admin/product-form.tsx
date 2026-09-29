@@ -321,7 +321,9 @@ export function ProductForm({
             {/* Each tick puts the product in a homepage row, so say which. */}
             {[
               ["is_featured", "Featured", product?.is_featured, "Homepage “Handpicked for you”"],
-              ["is_new_arrival", "New arrival", product?.is_new_arrival, "Homepage “New arrivals” row, and a New badge"],
+              // A brand-new product starts ticked, so adding something new
+              // shows "New" without an extra step; untick it once it is not.
+              ["is_new_arrival", "New arrival", product ? product.is_new_arrival : true, "Homepage “New arrivals” row, and a New badge"],
               ["is_best_seller", "Best seller", product?.is_best_seller, "Homepage “Best sellers” row, most sold first"],
             ].map(([name, label, checked, hint]) => (
               <label

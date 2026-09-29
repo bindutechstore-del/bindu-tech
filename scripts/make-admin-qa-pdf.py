@@ -90,6 +90,15 @@ SECTIONS = [
    "navigation, one after another.",
    "Each click responds at once with a grey loading outline, and the page fills in "
    "shortly after (about a second or less on normal mobile data). No click feels frozen."),
+  ("A-007b", "On a phone, check the bottom bar: Home, Menu, Cart, Search, Account.",
+   "Menu opens the side menu with a 'Hello there! Sign in' card (or your picture and "
+   "name when signed in); Search jumps to the search box; Cart shows the item count. "
+   "On a computer the bar is not shown."),
+  ("A-007c", "Signed in as a customer, open Account and upload 'Your picture', then Save.",
+   "Saved. Opening the menu shows the picture in the greeting card."),
+  ("A-007d", "On a phone, open All products.",
+   "'Filters' and the sort box sit side by side; choosing 'Price: high to low' or "
+   "'Price: low to high' re-orders the products."),
   ("A-008", "Sign out from the admin panel.",
    "Returned to the storefront, signed out. Going back to /admin asks you to sign in again."),
  ],
@@ -142,6 +151,8 @@ SECTIONS = [
    "The tile falls back to its icon. No broken-image box anywhere."),
   ("C-014", "Try to upload a PDF or a text file as a category picture.",
    "Refused with 'use a JPG, PNG, WebP or AVIF picture'. Nothing is uploaded."),
+  ("C-014b", "On a phone, swipe the 'Shop by category' row sideways.",
+   "It scrolls through every main category, one row only."),
   ("C-014a", "Open the homepage on a computer, then on a phone.",
    "'Shop by category' is ONE row either way -- six tiles on a computer, four on a "
    "phone or tablet. 'See all' opens an All categories page with every category."),
@@ -177,6 +188,13 @@ SECTIONS = [
    "Deleted. It disappears from admin and the storefront filter."),
   ("BR-008", "Create a brand with the same slug as an existing one.",
    "Rejected with 'That slug is taken.'"),
+  ("BR-008a", "Try to create a brand WITHOUT uploading a logo.",
+   "Refused: 'Upload the brand's logo'. Older brands without one show a 'No logo' tag "
+   "in the list -- edit them and upload one."),
+  ("BR-008b", "Upload logos for a few brands. Open the homepage on a phone.",
+   "'Our brands' shows the logos two at a time; swipe for more, the dots follow. "
+   "'See all' opens the Brands page, where typing in 'Search brands' narrows the list "
+   "and tapping a brand shows its products."),
   ("BR-009", "Open New product. Under Brand press 'New brand', type 'Walton' and press Enter.",
    "Walton is added and selected in the Brand list. The product itself is NOT saved yet "
    "and nothing you typed in the form is lost."),
@@ -265,6 +283,10 @@ SECTIONS = [
    "'Earn 50 points when this order is delivered' appears (doubles to 100 for 2 units)."),
   ("P-018", "Set Reward points back to 0 and reload the product page.",
    "The points line disappears entirely."),
+  ("P-018e", "Look at product cards on the storefront.",
+   "The photo shows 'In stock' (green) or 'Only N left' (red) when low; discounted "
+   "items show '-N% OFF' and 'Save Tk X' under the price; items ticked New arrival "
+   "show 'New' (a brand-new product starts ticked)."),
   ("P-018a", "Tick 'New arrival' on a product and save. Open the homepage.",
    "It appears in the 'New arrivals' row. The row shows ONLY products ticked 'New "
    "arrival', newest first, and the same list every time you reload."),

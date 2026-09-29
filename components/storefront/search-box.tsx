@@ -1,9 +1,10 @@
 "use client";
 
-import { useTransition } from "react";
+import { useEffect, useRef, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Search, Loader2 } from "lucide-react";
+import { FOCUS_SEARCH_EVENT } from "./mobile-tab-bar";
 
 /**
  * Header search. Submits to /products?q=… rather than querying as you type —
@@ -18,6 +19,20 @@ export function SearchBox() {
   const router = useRouter();
   const params = useSearchParams();
   const [value, setValue] = useState(params.get("q") ?? "");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // The phone navbar's Search button. Two of these boxes exist (header and
+  // mobile row); only the one actually on screen takes focus.
+  useEffect(() => {
+    const onFocus = () => {
+      const input = inputRef.current;
+      if (!input || input.offsetParent === null) return;
+      input.focus();
+      input.select();
+    };
+    window.addEventListener(FOCUS_SEARCH_EVENT, onFocus);
+    return () => window.removeEventListener(FOCUS_SEARCH_EVENT, onFocus);
+  }, []);
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -43,6 +58,7 @@ export function SearchBox() {
         />
       )}
       <input
+        ref={inputRef}
         type="search"
         name="q"
         value={value}

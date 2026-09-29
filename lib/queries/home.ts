@@ -70,7 +70,7 @@ export const getTopCategories = cache(async (): Promise<Category[]> => {
     .is("parent_id", null)
     .order("is_featured", { ascending: false })
     .order("position")
-    .limit(12);
+    .limit(60);
   return (data as unknown as Category[]) ?? [];
 });
 

@@ -84,6 +84,7 @@ export function BrandManager({ brands }: { brands: BrandRow[] }) {
                   <p className="flex items-center gap-2 text-sm font-medium text-ink">
                     <span className="truncate">{b.name}</span>
                     {!b.is_active ? <Badge tone="neutral">Hidden</Badge> : null}
+                    {!b.logo_url ? <Badge tone="warning">No logo</Badge> : null}
                   </p>
                   <p className="text-xs text-ink-muted">
                     /{b.slug} · {b.productCount}{" "}
@@ -196,7 +197,13 @@ function BrandForm({
         </Field>
 
         <div>
-          <p className="mb-1.5 text-sm font-medium text-ink">Logo</p>
+          <p className="mb-1.5 text-sm font-medium text-ink">
+            Logo {brand ? null : <span className="text-danger">*</span>}
+          </p>
+          <p className="mb-2 text-[11px] text-ink-faint">
+            Shown in the homepage “Our Brands” row and on the Brands page. A wide
+            logo on a plain background looks best.
+          </p>
           <ImageUploader
             name="logo_url"
             folder="brands"

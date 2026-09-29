@@ -80,7 +80,9 @@ export function ProductGrid({
 /** Horizontal rail for rows that should not push the fold down on mobile. */
 export function ProductRail({ products }: { products: ProductCardData[] }) {
   return (
-    <div className="rail -mx-4 flex gap-3 overflow-x-auto px-4 pb-2">
+    // scroll-px-4: snap to the padded edge, not the screen edge, so the
+    // first card keeps its 16px margin.
+    <div className="rail -mx-4 flex scroll-px-4 gap-3 overflow-x-auto px-4 pb-2">
       {products.map((p) => (
         <ProductCard key={p.id} product={p} className="w-44 shrink-0 sm:w-52" />
       ))}
@@ -98,21 +100,22 @@ export function CategoryGrid({
 }: {
   categories: Category[];
   /**
-   * Homepage: exactly one row at every screen size — four tiles on phones and
-   * tablets, six on a computer — with "See all" for the rest. Twelve tiles
-   * used to fill two rows on a computer and four on a phone before the first
-   * product.
+   * Homepage: one row at every screen size that swipes sideways to reach
+   * every other category (the product rails' `rail` strip), with "See all"
+   * for the full page. A grid of twelve used to fill two rows on a computer
+   * and four on a phone before the first product.
    */
   oneRow?: boolean;
 }) {
-  const shown = oneRow ? categories.slice(0, 6) : categories;
   return (
     <div
-      className={`grid sm:grid-cols-4 sm:gap-3 lg:grid-cols-6 ${
-        oneRow ? "grid-cols-4 gap-2" : "grid-cols-3 gap-3"
-      }`}
+      className={
+        oneRow
+          ? "rail -mx-4 flex scroll-px-4 gap-2 overflow-x-auto px-4 pb-1 sm:gap-3"
+          : "grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6"
+      }
     >
-      {shown.map((c, i) => {
+      {categories.map((c) => {
         const Icon =
           (c.icon && (Icons as unknown as Record<string, LucideIcon>)[c.icon]) ||
           Icons.Package;
@@ -122,8 +125,10 @@ export function CategoryGrid({
             key={c.id}
             href={`/products?category=${c.slug}`}
             className={`group flex flex-col items-center gap-2 rounded-xl border border-line bg-surface p-4 text-center transition-all hover:border-brand-200 hover:shadow-lift ${
-              oneRow ? "max-sm:p-2 max-sm:gap-1.5" : ""
-            } ${oneRow && i >= 4 ? "max-lg:hidden" : ""}`}
+              // Fixed widths so a sliver of the next tile shows at the edge —
+              // the cue that the row swipes.
+              oneRow ? "w-[5.6rem] shrink-0 max-sm:gap-1.5 max-sm:p-2 sm:w-32 lg:w-36" : ""
+            }`}
           >
             <span className="flex size-12 items-center justify-center rounded-full bg-brand-50 text-brand-600 transition-colors group-hover:bg-brand-600 group-hover:text-white">
               {c.image_url ? (

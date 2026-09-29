@@ -4,6 +4,7 @@ import { Package, Heart, MapPin, ArrowRight } from "lucide-react";
 import { requireUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { ProfileForm } from "@/components/account/profile-form";
+import { AvatarForm } from "@/components/account/avatar-form";
 import { PageHeader, Card } from "@/components/ui/primitives";
 import { formatTaka } from "@/lib/utils/money";
 
@@ -124,6 +125,9 @@ export default async function AccountPage() {
 
       <section className="mt-6">
         <h2 className="mb-3 text-base font-semibold text-ink">Your details</h2>
+        <div className="mb-4">
+          <AvatarForm userId={user.id} avatarUrl={user.profile?.avatar_url ?? null} />
+        </div>
         <ProfileForm
           fullName={user.profile?.full_name ?? ""}
           phone={user.profile?.phone ?? ""}

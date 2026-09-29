@@ -13,7 +13,7 @@ const OPTIONS: { value: ProductSort; label: string }[] = [
   { value: "rating", label: "Top rated" },
 ];
 
-export function SortSelect({ value }: { value: ProductSort }) {
+export function SortSelect({ value, className }: { value: ProductSort; className?: string }) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const pathname = usePathname();
@@ -32,7 +32,7 @@ export function SortSelect({ value }: { value: ProductSort }) {
             router.push(`${pathname}?${next.toString()}`);
           });
         }}
-        className="h-9 w-44 text-sm"
+        className={className ?? "h-9 w-44 text-sm"}
         aria-label="Sort products"
         disabled={isPending}
       >

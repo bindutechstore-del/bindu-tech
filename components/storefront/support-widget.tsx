@@ -62,7 +62,8 @@ export function SupportWidget({
   if (channels.length === 0) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-40 print:hidden">
+    // Above the phone navbar on phones; bottom corner from tablet width up.
+    <div className="fixed bottom-20 right-4 z-40 md:bottom-4 print:hidden">
       {open ? (
         <div className="mb-2 w-64 overflow-hidden rounded-xl border border-line bg-surface shadow-pop">
           <div className="border-b border-line px-4 py-3">

@@ -25,11 +25,14 @@ export function FilterPanel({
   brands,
   query,
   resultCount,
+  sort,
 }: {
   categories: Category[];
   brands: Brand[];
   query: ProductQuery;
   resultCount: number;
+  /** Shown beside the Filters button on phones: [Filters] [Price: high to low ▾]. */
+  sort?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -207,9 +210,10 @@ export function FilterPanel({
         </div>
       ) : null}
 
-      {/* Mobile trigger */}
-      <div className="lg:hidden">
-        <Button variant="outline" onClick={() => setOpen(true)} block>
+      {/* Mobile toolbar: Filters and the sort order side by side, so price
+          high-to-low / low-to-high is one tap away without scrolling back up. */}
+      <div className="flex items-center gap-2 lg:hidden">
+        <Button variant="outline" onClick={() => setOpen(true)} className="shrink-0">
           <SlidersHorizontal />
           Filters
           {activeCount > 0 ? (
@@ -218,6 +222,7 @@ export function FilterPanel({
             </span>
           ) : null}
         </Button>
+        {sort ? <div className="min-w-0 flex-1">{sort}</div> : null}
       </div>
 
       {open ? (

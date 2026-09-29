@@ -10,6 +10,8 @@ import {
 } from "@/lib/queries/home";
 import { getStoreSettings } from "@/lib/queries/settings";
 import { getDeliveryOptions } from "@/lib/queries/delivery";
+import { getBrands } from "@/lib/queries/catalog";
+import { BrandCarousel } from "@/components/storefront/brand-carousel";
 import { deliveryNoteFromOptions } from "@/lib/content/highlights";
 import { formatTaka } from "@/lib/utils/money";
 import { HeroCards } from "@/components/storefront/hero-cards";
@@ -95,6 +97,10 @@ export default async function HomePage() {
 
       <Suspense fallback={<RailSkeleton title="Best sellers" />}>
         <RailsBlock storeName={settings.store_name} />
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <BrandsBlock />
       </Suspense>
 
       <Suspense fallback={null}>
@@ -245,6 +251,25 @@ async function RailsBlock({ storeName }: { storeName: string }) {
         </Section>
       ) : null}
     </>
+  );
+}
+
+/**
+ * "Our Brands" — a row of logos, so only brands that have one. A brand added
+ * without a logo (say, quick-added from the product form) joins the row the
+ * moment a logo is uploaded; until then it is still on the Brands page and in
+ * the filters, by name.
+ */
+async function BrandsBlock() {
+  const withLogo = (await getBrands())
+    .filter((b) => b.logo_url)
+    .map((b) => ({ id: b.id, name: b.name, slug: b.slug, logo_url: b.logo_url }));
+  if (withLogo.length === 0) return null;
+
+  return (
+    <Section title="Our brands" href="/brands">
+      <BrandCarousel brands={withLogo} />
+    </Section>
   );
 }
 

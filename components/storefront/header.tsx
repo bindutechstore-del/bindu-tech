@@ -4,7 +4,7 @@ import { Phone, Heart, Package, Percent, ArrowRight, type LucideIcon } from "luc
 import * as Icons from "lucide-react";
 import { getCategories } from "@/lib/queries/catalog";
 import { getStoreSettings } from "@/lib/queries/settings";
-import { getCartQuote } from "@/lib/actions/cart";
+import { getRequestCartQuote } from "@/lib/cart/quote";
 import { getSessionUser, isStaffRole } from "@/lib/auth/session";
 import { SearchBox } from "./search-box";
 import { CartButton } from "./cart-button";
@@ -21,7 +21,7 @@ export async function Header() {
   const [categories, settings, quote, user] = await Promise.all([
     getCategories(),
     getStoreSettings(),
-    getCartQuote(),
+    getRequestCartQuote(),
     getSessionUser(),
   ]);
 
@@ -53,7 +53,12 @@ export async function Header() {
       </div>
 
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4">
-        <CategoryDrawer categories={categories} signedIn={Boolean(user)} />
+        <CategoryDrawer
+          categories={categories}
+          signedIn={Boolean(user)}
+          userName={user?.profile?.full_name?.split(" ")[0] ?? null}
+          avatarUrl={user?.profile?.avatar_url ?? null}
+        />
 
         <Link href="/" className="flex shrink-0 flex-col">
           <div className="flex items-baseline gap-1.5">

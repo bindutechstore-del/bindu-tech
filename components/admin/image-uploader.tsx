@@ -94,6 +94,8 @@ export function ImageUploader({
   maxBytes = 5 * 1024 * 1024,
   maxEdge = 1600,
   label = "picture",
+  deniedMessage = "your account is not allowed to upload. Sign in again as staff.",
+  fileBase,
 }: {
   /** Name of the repeated hidden input the form posts. */
   name: string;
@@ -110,6 +112,13 @@ export function ImageUploader({
   maxEdge?: number;
   /** What one item is called on the button: "logo", "banner", "picture". */
   label?: string;
+  /** Shown when storage refuses the upload (row-level security). */
+  deniedMessage?: string;
+  /**
+   * A fixed file name instead of the original one — for customer photos,
+   * whose original names are often the person's own ("rahim-selfie.jpg").
+   */
+  fileBase?: string;
 }) {
   const limit = single ? 1 : max;
   const limitMb = Math.round((maxBytes / 1024 / 1024) * 10) / 10;
@@ -165,12 +174,12 @@ export function ImageUploader({
             return null;
           }
 
-          const base = file.name
+          const base = fileBase ?? (file.name
             .replace(/\.[^.]+$/, "")
             .toLowerCase()
             .replace(/[^a-z0-9]+/g, "-")
             .replace(/^-+|-+$/g, "")
-            .slice(0, 40) || "image";
+            .slice(0, 40) || "image");
           const path = `${sessionFolder.current}/${Date.now().toString(36)}-${base}.${ext}`;
 
           const { error } = await supabase.storage.from(bucket).upload(path, blob, {
@@ -184,7 +193,7 @@ export function ImageUploader({
             // non-staff session; say that rather than the raw policy text.
             problems.push(
               /row-level security|unauthori|not allowed|403/i.test(error.message)
-                ? `${file.name}: your account is not allowed to upload. Sign in again as staff.`
+                ? `${file.name}: ${deniedMessage}`
                 : `${file.name}: upload failed (${error.message}).`,
             );
             return null;

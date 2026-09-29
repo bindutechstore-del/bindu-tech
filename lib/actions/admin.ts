@@ -1818,6 +1818,17 @@ export async function saveBrand(
     };
   }
 
+  // Every brand shows as its logo in the homepage "Our Brands" row and on
+  // the Brands page, so a new one needs its picture. (Older brands without
+  // one still save, and show their name until a logo is added.)
+  if (!id && !parsed.data.logo_url) {
+    return {
+      ok: false,
+      error: "Upload the brand's logo — it is what shoppers see.",
+      fieldErrors: { logo_url: "Required" },
+    };
+  }
+
   // A typed slug is the operator's choice and is checked as given; an empty
   // one is made from the name and made unique.
   const slug = parsed.data.slug || freeBrandSlug(all, name, id);

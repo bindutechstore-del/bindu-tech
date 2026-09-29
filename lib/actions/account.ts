@@ -85,6 +85,82 @@ export async function updateProfile(
   return { ok: true, message: "Profile updated." };
 }
 
+/**
+ * Save (or clear) the customer's profile picture.
+ *
+ * The file itself was uploaded by the browser into avatars/<their id>/…,
+ * which storage RLS allows only for their own folder. This only records the
+ * URL, and only a URL pointing inside that same folder — never someone
+ * else's picture, never an outside link.
+ */
+export async function updateAvatar(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const user = await requireUser();
+  const raw = String(formData.get("avatar_url") ?? "").trim();
+
+  // Parsed, not prefix-matched: a string check let "…/<me>/%2e%2e/<you>/…"
+  // through, which a browser resolves to someone else's folder. The same
+  // rule is a CHECK constraint on profiles (0026), since customers can also
+  // update their row directly.
+  let url: string | null = null;
+  if (raw) {
+    let parsed: URL | null = null;
+    try {
+      parsed = new URL(raw);
+    } catch {
+      parsed = null;
+    }
+    const host = process.env.NEXT_PUBLIC_SUPABASE_URL
+      ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).host
+      : "";
+    const path = new RegExp(
+      `^/storage/v1/object/public/avatars/${user.id}/[A-Za-z0-9_-]+/[A-Za-z0-9_-]+\\.(webp|jpe?g|png)$`,
+    );
+    if (
+      !parsed ||
+      parsed.protocol !== "https:" ||
+      parsed.host !== host ||
+      parsed.search ||
+      parsed.hash ||
+      raw.includes("%") ||
+      !path.test(parsed.pathname)
+    ) {
+      return { ok: false, error: "Upload the picture here, then save." };
+    }
+    url = parsed.href;
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("profiles")
+    .update({ avatar_url: url })
+    .eq("id", user.id);
+  if (error) return { ok: false, error: "Could not save your picture." };
+
+  // Remove every other file in their folder: a picture that was replaced or
+  // removed should not stay online, and each one costs free-tier storage.
+  // Best effort — the profile is already saved.
+  const keep = url ? url.split("/storage/v1/object/public/avatars/")[1] : null;
+  const { data: sessions } = await supabase.storage.from("avatars").list(user.id, { limit: 50 });
+  const stale: string[] = [];
+  for (const folder of sessions ?? []) {
+    const { data: files } = await supabase.storage
+      .from("avatars")
+      .list(`${user.id}/${folder.name}`, { limit: 50 });
+    for (const f of files ?? []) {
+      const path = `${user.id}/${folder.name}/${f.name}`;
+      if (path !== keep) stale.push(path);
+    }
+  }
+  if (stale.length > 0) await supabase.storage.from("avatars").remove(stale);
+
+  // The menu drawer greets them with it on every page.
+  revalidatePath("/", "layout");
+  return { ok: true, message: url ? "Picture saved." : "Picture removed." };
+}
+
 /** Wishlist toggle. Returns the new state so the heart can flip optimistically. */
 export async function toggleWishlist(productId: string): Promise<{
   ok: boolean;

@@ -27,6 +27,10 @@ export function ProductCard({
   const rating = averageRating(product);
   const outOfStock = product.stock <= 0;
   const lowStock = !outOfStock && product.stock <= (product.low_stock_threshold ?? 5);
+  const savePaisa =
+    product.compare_at_paisa && product.compare_at_paisa > product.price_paisa
+      ? product.compare_at_paisa - product.price_paisa
+      : 0;
 
   return (
     <article
@@ -54,18 +58,29 @@ export function ProductCard({
           </div>
         )}
 
-        <div className="absolute left-2 top-2 flex flex-col gap-1">
-          {off ? <Badge tone="sale">-{off}%</Badge> : null}
-          {product.is_new_arrival && !off ? <Badge tone="brand">New</Badge> : null}
+        {/* Discount and New together — a new product on offer is both. */}
+        <div className="absolute left-2 top-2 flex flex-col items-start gap-1">
+          {off ? <Badge tone="sale">-{off}% OFF</Badge> : null}
+          {product.is_new_arrival ? <Badge tone="brand">New</Badge> : null}
         </div>
 
+        {/* Stock on the photo, where the eye already is: "In stock", or how
+            many are left once it runs low. */}
         {outOfStock ? (
           <div className="absolute inset-0 flex items-center justify-center bg-surface/70">
             <span className="rounded-md bg-ink px-2 py-1 text-xs font-medium text-white">
               Out of stock
             </span>
           </div>
-        ) : null}
+        ) : (
+          <span
+            className={`absolute bottom-2 left-2 rounded-full px-2 py-0.5 text-[10px] font-semibold text-white shadow-sm ${
+              lowStock ? "bg-danger" : "bg-success"
+            }`}
+          >
+            {lowStock ? `Only ${product.stock} left` : "In stock"}
+          </span>
+        )}
       </Link>
 
       <div className="flex flex-1 flex-col gap-2 p-3">
@@ -77,22 +92,23 @@ export function ProductCard({
 
         <Rating value={rating} count={product.rating_count || undefined} />
 
-        <div className="mt-auto flex items-baseline gap-2">
-          <span className="tabular text-base font-semibold text-ink">
-            {formatTaka(product.price_paisa)}
-          </span>
-          {product.compare_at_paisa ? (
-            <span className="tabular text-xs text-ink-faint line-through">
-              {formatTaka(product.compare_at_paisa)}
+        <div className="mt-auto">
+          <div className="flex flex-wrap items-baseline gap-x-2">
+            <span className="tabular text-base font-semibold text-ink">
+              {formatTaka(product.price_paisa)}
             </span>
+            {savePaisa > 0 ? (
+              <span className="tabular text-xs text-ink-faint line-through">
+                {formatTaka(product.compare_at_paisa!)}
+              </span>
+            ) : null}
+          </div>
+          {savePaisa > 0 ? (
+            <p className="tabular text-[11px] font-semibold text-success">
+              Save {formatTaka(savePaisa)}
+            </p>
           ) : null}
         </div>
-
-        {lowStock ? (
-          <p className="text-[11px] font-medium text-warning">
-            Only {product.stock} left
-          </p>
-        ) : null}
 
         {/*
           Stacked rather than side by side: at two columns on a phone a card is

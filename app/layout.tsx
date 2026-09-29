@@ -179,6 +179,10 @@ export default async function RootLayout({
         {children}
         <Toaster
           position="bottom-right"
+          // Clear of the phone navbar (fixed, ~56px): a toast sitting on it
+          // swallowed taps on Cart and Menu for four seconds.
+          offset={{ bottom: 80, right: 24 }}
+          mobileOffset={{ bottom: 80 }}
           toastOptions={{ style: { fontFamily: "var(--font-sans)" } }}
         />
       </body>

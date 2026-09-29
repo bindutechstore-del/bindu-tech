@@ -92,7 +92,10 @@ export default async function ProductsPage({
             {activeCategory?.description ? ` · ${activeCategory.description}` : ""}
           </p>
         </div>
-        <SortSelect value={query.sort} />
+        {/* On phones the sort sits beside the Filters button instead. */}
+        <div className="hidden lg:block">
+          <SortSelect value={query.sort} />
+        </div>
       </div>
 
       {chipParent && subCategories.length > 0 ? (
@@ -119,6 +122,9 @@ export default async function ProductsPage({
 
       <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
         <FilterPanel
+          // Full width of what is left beside Filters, so a 320px phone with
+          // an active filter count does not scroll sideways.
+          sort={<SortSelect value={query.sort} className="h-10 w-full min-w-0 text-sm" />}
           categories={categories}
           brands={brands}
           query={query}
