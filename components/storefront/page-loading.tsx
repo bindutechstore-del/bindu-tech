@@ -1,8 +1,10 @@
 /**
- * Instant navigation feedback for the storefront shell.
+ * Instant navigation feedback for storefront pages.
  *
- * Next.js shows this while a Server Component is streaming — so clicking any
- * link feels instant instead of hanging until the database responds.
+ * Each section re-exports this as its loading.tsx. It deliberately does NOT
+ * sit at the (storefront) root any more: a root loading boundary wrapped the
+ * homepage too, so the hero arrived hidden and waited for a script to reveal
+ * it — about a second of extra LCP on a phone.
  */
 export default function StorefrontLoading() {
   return (

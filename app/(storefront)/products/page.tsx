@@ -44,7 +44,12 @@ export async function generateMetadata({
 
   const category = categories.find((c) => c.slug === one("category"));
   if (category) {
-    const title = `${category.name} Price in Bangladesh`;
+    // Promotional collections ("Deals of the Day", "Summer Sale") are not a
+    // kind of product, so "… Price in Bangladesh" would read oddly.
+    const promo = /deal|sale|offer|best seller|collection/i.test(category.name);
+    const title = promo
+      ? `${category.name} — Gadget Offers in Bangladesh`
+      : `${category.name} Price in Bangladesh`;
     const url = `/products?category=${category.slug}`;
     const description = metaDescription(
       `Buy ${category.name} online at the best price in Bangladesh from ${store_name}. Compare prices, pay cash on delivery and get delivery anywhere in Bangladesh.`,

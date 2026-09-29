@@ -22,7 +22,7 @@ export function MobileTabBar({ cartCount }: { cartCount: number }) {
 
   const item =
     "flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium uppercase tracking-wide";
-  const on = (active: boolean) => (active ? "text-white" : "text-white/75 hover:text-white");
+  const on = (active: boolean) => (active ? "text-white" : "text-white/90 hover:text-white");
 
   return (
     <nav

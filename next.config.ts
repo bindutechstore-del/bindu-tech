@@ -18,6 +18,10 @@ const supabaseHost = (() => {
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Title, description, canonical and Open Graph tags always go in <head>.
+  // Next 16 otherwise streams them into the body for ordinary browsers, and
+  // Lighthouse, Facebook, WhatsApp and some crawlers only read the head.
+  htmlLimitedBots: /.*/,
   images: {
     formats: ["image/avif", "image/webp"],
     // Storefront grid asks for 1x/2x of a ~300px card, PDP asks for ~900px.
