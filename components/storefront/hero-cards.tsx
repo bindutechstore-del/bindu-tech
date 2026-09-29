@@ -106,7 +106,11 @@ function CampaignCard({
           alt=""
           fill
           sizes="(min-width: 1280px) 250px, (min-width: 1024px) 300px, (min-width: 768px) 31vw, (min-width: 640px) 38vw, 50vw"
-          priority={priority}
+          // Next 16's `priority` only adds a preload, which Chrome still
+          // fetches at Low priority behind the scripts. High fetch priority is
+          // what gets the first cards (the LCP image) on screen early.
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : "auto"}
           className="object-cover transition-transform duration-[600ms] ease-out group-hover:scale-[1.05]"
         />
       ) : null}

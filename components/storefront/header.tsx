@@ -71,7 +71,7 @@ export async function Header() {
                 src={settings.logo_url}
                 alt={settings.store_name}
                 fill
-                priority
+                loading="eager"
                 sizes="150px"
                 className="object-contain object-left"
               />

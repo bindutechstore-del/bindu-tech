@@ -54,7 +54,8 @@ export function Gallery({
             src={urls[active]!}
             alt={alt}
             fill
-            priority
+            loading="eager"
+            fetchPriority="high"
             sizes="(min-width: 1024px) 45vw, 100vw"
             className="object-contain"
           />

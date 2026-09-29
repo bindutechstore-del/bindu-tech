@@ -49,7 +49,8 @@ export function ProductCard({
             alt={product.name}
             fill
             sizes="(min-width: 1280px) 20vw, (min-width: 768px) 25vw, 45vw"
-            priority={priority}
+            loading={priority ? "eager" : "lazy"}
+            fetchPriority={priority ? "high" : "auto"}
             className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
           />
         ) : (

@@ -35,7 +35,8 @@ export function PromoTiles({ banners }: { banners: Banner[] }) {
                 fill
                 // Four tiles are visible at desktop width, one and a bit on a phone.
                 sizes="(min-width: 1024px) 288px, (min-width: 640px) 256px, 224px"
-                priority={i < 2}
+                loading={i < 2 ? "eager" : "lazy"}
+                fetchPriority={i < 2 ? "high" : "auto"}
                 className="object-cover transition-transform duration-500 group-hover:scale-105"
               />
             ) : null}
