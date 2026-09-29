@@ -72,7 +72,7 @@ export function HeroCards({
             >
               {/* Two cards fill a phone screen; preloading a third only
                   slowed the two the visitor actually sees. */}
-              <CampaignCard banner={b} priority={i < 2} />
+              <CampaignCard banner={b} priority={i < 2} eager={i < 5} />
             </li>
           ))}
         </HeroRail>
@@ -84,9 +84,12 @@ export function HeroCards({
 function CampaignCard({
   banner: b,
   priority = false,
+  eager = false,
 }: {
   banner: Banner;
   priority?: boolean;
+  /** On screen at first paint on a wide screen (up to five cards): never lazy. */
+  eager?: boolean;
 }) {
   const accent = b.accent_hex ?? "#016952";
 
@@ -109,7 +112,7 @@ function CampaignCard({
           // Next 16's `priority` only adds a preload, which Chrome still
           // fetches at Low priority behind the scripts. High fetch priority is
           // what gets the first cards (the LCP image) on screen early.
-          loading={priority ? "eager" : "lazy"}
+          loading={priority || eager ? "eager" : "lazy"}
           fetchPriority={priority ? "high" : "auto"}
           className="object-cover transition-transform duration-[600ms] ease-out group-hover:scale-[1.05]"
         />

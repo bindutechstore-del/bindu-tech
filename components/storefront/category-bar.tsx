@@ -104,7 +104,7 @@ export function CategoryBar({
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
-          aria-controls={panelId}
+          aria-controls={open ? panelId : undefined}
           className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md bg-brand-600 px-3 text-sm font-semibold text-white hover:bg-brand-700"
         >
           <LayoutGrid size={15} />
@@ -128,7 +128,7 @@ export function CategoryBar({
           <button
             type="button"
             onClick={() => setOpen(true)}
-            aria-controls={panelId}
+            aria-controls={open ? panelId : undefined}
             className="inline-flex h-8 shrink-0 items-center gap-1 rounded-md px-2.5 text-sm font-medium text-brand-600 hover:bg-brand-50"
           >
             More
