@@ -453,6 +453,15 @@ export async function countNewProductRequests(): Promise<number> {
   return error ? 0 : (count ?? 0);
 }
 
+export async function countNewPartnerApplications(): Promise<number> {
+  const db = createAdminClient();
+  const { count, error } = await db
+    .from("partner_applications")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "new");
+  return error ? 0 : (count ?? 0);
+}
+
 // ── Staff ───────────────────────────────────────────────────────────────────
 
 export interface StaffMember {

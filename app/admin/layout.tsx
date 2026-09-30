@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { requireStaff, can } from "@/lib/auth/session";
 import { getStoreSettings } from "@/lib/queries/settings";
-import { countPendingManualPayments, countNewProductRequests } from "@/lib/queries/admin";
+import {
+  countPendingManualPayments,
+  countNewProductRequests,
+  countNewPartnerApplications,
+} from "@/lib/queries/admin";
 import { AdminNav } from "@/components/admin/admin-nav";
 
 export const metadata = { title: "Admin", robots: { index: false } };
@@ -17,10 +21,11 @@ export default async function AdminLayout({
 
   // Independent reads, so in parallel. The pending count is only worth
   // making for someone who can act on it.
-  const [settings, pendingPayments, newRequests] = await Promise.all([
+  const [settings, pendingPayments, newRequests, newPartners] = await Promise.all([
     getStoreSettings(),
     can(user, "payments") ? countPendingManualPayments() : Promise.resolve(0),
     can(user, "products") ? countNewProductRequests() : Promise.resolve(0),
+    can(user, "customers") ? countNewPartnerApplications() : Promise.resolve(0),
   ]);
 
   return (
@@ -30,6 +35,7 @@ export default async function AdminLayout({
         storeName={settings.store_name}
         pendingPayments={pendingPayments}
         newRequests={newRequests}
+        newPartners={newPartners}
       />
 
       <div className="flex min-w-0 flex-1 flex-col">

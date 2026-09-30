@@ -60,7 +60,7 @@ const PARTNER_LINKS: {
   { href: "/group-buy", label: "Group Buy", icon: Users, tone: "bg-brand-600" },
   {
     href: "/be-partner",
-    label: "Be Partner",
+    label: "Become a Partner",
     icon: Handshake,
     tone: "bg-brand-700",
   },

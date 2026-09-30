@@ -23,6 +23,7 @@ import {
   ShieldCheck,
   Tag,
   PackagePlus,
+  Handshake,
 } from "lucide-react";
 import type { AdminPermission } from "@/lib/auth/permissions";
 import { cn } from "@/lib/utils/cn";
@@ -65,6 +66,7 @@ const SECTIONS: {
       { href: "/admin/orders", label: "Orders", icon: ShoppingBag, permission: "orders" },
       { href: "/admin/payments", label: "Payments", icon: CreditCard, permission: "payments" },
       { href: "/admin/customers", label: "Customers", icon: Users, permission: "customers" },
+      { href: "/admin/partners", label: "Partners", icon: Handshake, permission: "customers" },
     ],
   },
   {
@@ -93,6 +95,7 @@ export function AdminNav({
   storeName,
   pendingPayments = 0,
   newRequests = 0,
+  newPartners = 0,
 }: {
   permissions: AdminPermission[];
   storeName: string;
@@ -100,6 +103,8 @@ export function AdminNav({
   pendingPayments?: number;
   /** Product requests nobody has looked at yet. */
   newRequests?: number;
+  /** "Become a partner" applications nobody has looked at yet. */
+  newPartners?: number;
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
@@ -135,7 +140,9 @@ export function AdminNav({
                     ? pendingPayments
                     : l.href === "/admin/requests"
                       ? newRequests
-                      : 0;
+                      : l.href === "/admin/partners"
+                        ? newPartners
+                        : 0;
 
                 return (
                   <Link

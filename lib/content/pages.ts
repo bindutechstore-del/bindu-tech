@@ -465,51 +465,7 @@ export const CONTENT_PAGES: ContentPage[] = [
       },
     ],
   },
-
-  {
-    slug: "be-partner",
-    title: "Be a partner",
-    description:
-      "Retail, corporate supply and affiliate partnerships with {{store}}.",
-    intro:
-      "Partnership covers everything that is not a one-off retail sale: shops that want to stock us, companies that buy on a purchase order, and creators who send us customers.",
-    sections: [
-      {
-        heading: "Retail partner",
-        body: [
-          "For physical shops and online stores that want to carry our lines. You buy at wholesale on a standing account, with credit terms agreed after the first three settled orders.",
-        ],
-        points: [
-          "Wholesale pricing across the full catalogue.",
-          "Priority allocation when stock is tight.",
-          "Display units for lines you commit to stocking.",
-        ],
-      },
-      {
-        heading: "Corporate supply",
-        body: [
-          "For companies, schools and NGOs buying against a purchase order. We invoice with full VAT and BIN details, supply a delivery challan, and accept bank transfer or cheque on agreed terms.",
-        ],
-        points: [
-          "Quotation and proforma invoice on request.",
-          "Delivery to multiple sites on one purchase order.",
-          "Asset tagging and itemised serial lists for warranty tracking.",
-        ],
-      },
-      {
-        heading: "Affiliate",
-        body: [
-          "For creators and communities. You get a tracked link and a commission on delivered, non-returned orders, paid monthly by bKash or bank transfer.",
-        ],
-      },
-      {
-        heading: "Get in touch",
-        body: [
-          "Tell us which of the three fits you and a little about your business. We will come back with the terms in writing before anything is signed.",
-        ],
-      },
-    ],
-  },
+  // "be-partner" is its own route with an application form: app/(storefront)/be-partner.
 ];
 
 export function getContentPage(slug: string): ContentPage | undefined {
