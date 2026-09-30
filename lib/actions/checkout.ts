@@ -7,6 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getOrCreateCartId } from "@/lib/cart/session";
 import { checkoutSchema } from "@/lib/validations/checkout";
 import { getProvider } from "@/lib/payments";
+import { siteUrl } from "@/lib/utils/site-url";
 
 /**
  * Order placement.
@@ -159,7 +160,7 @@ export async function placeOrder(
     redirect(`/order/confirmed?ref=${encodeURIComponent(order.order_number)}`);
   }
 
-  const site = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const site = siteUrl();
   const secret = process.env.PAYMENT_CALLBACK_SECRET ?? "";
   const callbackUrl =
     `${site}/api/payments/${input.payment_method}/callback` +

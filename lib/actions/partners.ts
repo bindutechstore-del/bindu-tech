@@ -7,6 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getSessionUser, requirePermission } from "@/lib/auth/session";
 import { bdPhone } from "@/lib/validations/checkout";
 import { PARTNER_TYPES } from "@/lib/validations/partner";
+import { siteUrl } from "@/lib/utils/site-url";
 
 export interface PartnerState {
   ok: boolean;
@@ -119,7 +120,7 @@ export async function submitPartnerApplication(
       options: {
         // Read by the on_auth_user_created trigger to populate profiles.
         data: { full_name: `${d.first_name} ${d.last_name}`, phone },
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/auth/callback`,
+        emailRedirectTo: `${siteUrl()}/auth/callback`,
       },
     });
     if (error) {

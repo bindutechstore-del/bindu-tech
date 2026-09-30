@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { CONTENT_PAGES } from "@/lib/content/pages";
+import { siteUrl } from "@/lib/utils/site-url";
 
 /**
  * Sitemap.
@@ -10,7 +11,7 @@ import { CONTENT_PAGES } from "@/lib/content/pages";
  * kind of query the free tier cannot absorb.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const base = siteUrl();
   const supabase = await createClient();
 
   const [{ data: products }, { data: categories }] = await Promise.all([

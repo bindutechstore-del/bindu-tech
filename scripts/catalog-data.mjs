@@ -21,7 +21,7 @@ const img = (id, w = 1200) =>
  * be replaced with real product photography from /admin before launch.
  */
 const SUPABASE_URL =
-  process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://scjbtrzqzeeosgvwfbae.supabase.co";
+  process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://padfvqjdmtcmowajqrhu.supabase.co";
 const local = (name) =>
   `${SUPABASE_URL}/storage/v1/object/public/product-images/seed/${name}.jpg`;
 

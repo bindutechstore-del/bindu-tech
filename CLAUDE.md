@@ -44,7 +44,7 @@ npm run verify     # typecheck + test + build
 
 ## Supabase
 
-Project ref `scjbtrzqzeeosgvwfbae`, region ap-northeast-2. Migrations are plain
+Project ref `padfvqjdmtcmowajqrhu`, region ap-northeast-2. Migrations are plain
 SQL in `supabase/migrations/`, applied in filename order. They are idempotent —
 re-running is safe. Apply with `scripts/db-apply.mjs` (uses the management PAT
 in `SUPABASE_ACCESS_TOKEN`) or paste into the SQL editor.

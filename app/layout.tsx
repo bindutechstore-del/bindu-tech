@@ -13,6 +13,7 @@ import { themeToCss } from "@/lib/theme/schema";
 import { Toaster } from "sonner";
 import { getStoreSettings } from "@/lib/queries/settings";
 import "./globals.css";
+import { siteUrl } from "@/lib/utils/site-url";
 
 /**
  * Three faces, each with a job.
@@ -120,7 +121,7 @@ const ALL_FONT_CLASSES = [
 
 export async function generateMetadata(): Promise<Metadata> {
   const s = await getStoreSettings();
-  const site = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const site = siteUrl();
 
   return {
     metadataBase: new URL(site),

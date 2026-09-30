@@ -35,7 +35,7 @@ insert into public.settings (key, value, description, is_public) values
   ('warranty_note',
    '"Warranty is honoured through the brand''s authorised Bangladesh service centre. Keep the invoice — we can re-issue it from your account at any time."'::jsonb,
    'Shown on product pages and the warranty policy page', true),
-  ('supabase_url', '"https://scjbtrzqzeeosgvwfbae.supabase.co"'::jsonb,
+  ('supabase_url', '"https://padfvqjdmtcmowajqrhu.supabase.co"'::jsonb,
    'Public project URL, used to build storage URLs. Same value as NEXT_PUBLIC_SUPABASE_URL — public by definition.', true),
   ('low_stock_banner_threshold', '5'::jsonb,
    'Product pages show "only N left" at or below this count', true),

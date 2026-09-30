@@ -6,6 +6,7 @@ import { getStoreSettings } from "@/lib/queries/settings";
 import { ReferralShare } from "@/components/account/referral-share";
 import { Card } from "@/components/ui/primitives";
 import { formatTaka } from "@/lib/utils/money";
+import { siteUrl } from "@/lib/utils/site-url";
 
 export const metadata: Metadata = { title: "Refer a friend" };
 export const dynamic = "force-dynamic";
@@ -21,7 +22,7 @@ export default async function ReferralsPage() {
   // belong to somebody.
   if (!summary) redirect("/sign-in?next=/account/referrals");
 
-  const site = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const site = siteUrl();
   const link = summary.code ? `${site}/sign-up?ref=${summary.code}` : "";
 
   return (

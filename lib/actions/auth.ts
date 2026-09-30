@@ -6,6 +6,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { readGuestToken, clearGuestToken } from "@/lib/cart/session";
 import { bdPhone } from "@/lib/validations/checkout";
+import { siteUrl } from "@/lib/utils/site-url";
 
 export interface AuthState {
   ok: boolean;
@@ -94,7 +95,7 @@ export async function signUp(_prev: AuthState, formData: FormData): Promise<Auth
     options: {
       // Read by the on_auth_user_created trigger to populate profiles.
       data: { full_name: parsed.data.full_name, phone: parsed.data.phone || null },
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/auth/callback`,
+      emailRedirectTo: `${siteUrl()}/auth/callback`,
     },
   });
 
@@ -152,7 +153,7 @@ export async function requestPasswordReset(
   // the form told them — wrongly — that the link had expired. The callback
   // route exchanges the code and then forwards them on, exactly as the
   // sign-up confirmation link already did.
-  const site = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const site = siteUrl();
   await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${site}/auth/callback?next=/reset-password`,
   });
