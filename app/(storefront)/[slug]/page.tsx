@@ -48,10 +48,10 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const page = await loadPage(slug);
-  // notFound() here, not a "Not found" title: metadata is resolved before the
-  // first byte (htmlLimitedBots in next.config), so this makes the response a
-  // real 404. Returning a title let the page stream with status 200, which
-  // Google counts as a soft 404 — and /favicon.ico was answered with a page.
+  // notFound(), not a "Not found" title. This route has no loading screen, so
+  // nothing is sent before this runs and the answer is a real 404 — the
+  // catch-all is where junk URLs (and, before app/favicon.ico, /favicon.ico)
+  // land.
   if (!page) notFound();
   return {
     title: page.content.title,
