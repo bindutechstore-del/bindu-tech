@@ -301,6 +301,41 @@ export function ProductForm({
                 />
               </Field>
             </div>
+
+            {/* Not every product has a warranty: each line on the product page
+                can be hidden. The marker tells the save that these boxes were
+                on the form (an unticked box sends nothing at all). */}
+            <input type="hidden" name="product_info__on" value="1" />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="flex items-start gap-2.5 rounded-lg border border-line p-3">
+                <input
+                  type="checkbox"
+                  name="show_warranty"
+                  defaultChecked={product?.show_warranty ?? true}
+                  className="mt-0.5 size-4 accent-brand-600"
+                />
+                <span className="text-sm">
+                  <span className="block font-medium text-ink">Show warranty</span>
+                  <span className="block text-xs text-ink-muted">
+                    Untick for products that have no warranty
+                  </span>
+                </span>
+              </label>
+              <label className="flex items-start gap-2.5 rounded-lg border border-line p-3">
+                <input
+                  type="checkbox"
+                  name="show_replacement"
+                  defaultChecked={product?.show_replacement ?? true}
+                  className="mt-0.5 size-4 accent-brand-600"
+                />
+                <span className="text-sm">
+                  <span className="block font-medium text-ink">Show replacement promise</span>
+                  <span className="block text-xs text-ink-muted">
+                    The “7-day replacement” line on the product page
+                  </span>
+                </span>
+              </label>
+            </div>
           </div>
         </Card>
       </div>

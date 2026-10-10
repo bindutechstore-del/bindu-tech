@@ -42,6 +42,9 @@ export const COLOR_FIELDS = [
   { key: "danger", label: "Sale / danger", hint: "Discounts, errors, the Sale row" },
   { key: "success", label: "Success", hint: "In stock, delivered, confirmations" },
   { key: "warning", label: "Warning", hint: "Pending states and low stock" },
+  { key: "storeName", label: "Shop name", hint: "Your name beside the logo" },
+  { key: "footerBg", label: "Footer background", hint: "The bottom of every page" },
+  { key: "footerText", label: "Footer text", hint: "Words and links in the footer" },
 ] as const;
 
 export type ColorKey = (typeof COLOR_FIELDS)[number]["key"];
@@ -53,6 +56,11 @@ export interface SiteTheme {
   colors: Record<ColorKey, string>;
   /** Corner rounding for cards and buttons, in rem. */
   radius: number;
+  /**
+   * Show the shop name as text beside the logo. On for a square logo mark;
+   * off when the uploaded logo is a wide wordmark that already spells it out.
+   */
+  showStoreName: boolean;
 }
 
 /**
@@ -75,8 +83,12 @@ export const DEFAULT_THEME: SiteTheme = {
     danger: "#be123c",
     success: "#0f766e",
     warning: "#b45309",
+    storeName: "#016952",
+    footerBg: "#ffffff",
+    footerText: "#14161a",
   },
   radius: 0.75,
+  showStoreName: true,
 };
 
 /**
@@ -159,6 +171,9 @@ export function sanitiseTheme(raw: unknown): SiteTheme {
       Number.isFinite(radius) && radius >= 0 && radius <= 2
         ? radius
         : DEFAULT_THEME.radius,
+    // Themes saved before the switch existed have no value: show the name.
+    showStoreName:
+      typeof v.showStoreName === "boolean" ? v.showStoreName : DEFAULT_THEME.showStoreName,
   };
 }
 
@@ -184,6 +199,9 @@ export function themeToCss(theme: SiteTheme): string {
     `--color-danger:${c.danger}`,
     `--color-success:${c.success}`,
     `--color-warning:${c.warning}`,
+    `--color-store-name:${c.storeName}`,
+    `--color-footer-bg:${c.footerBg}`,
+    `--color-footer-text:${c.footerText}`,
     `--radius-card:${theme.radius}rem`,
   ];
 

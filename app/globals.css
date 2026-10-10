@@ -13,6 +13,15 @@
  * sheet, not a shop.
  */
 @theme {
+  /* Shop name beside the logo, and the footer — each chosen in admin → Design.
+     The footer's softer text and hairlines are mixed from its two colours, so
+     a dark footer gets light, readable links without a third setting. */
+  --color-store-name: #016952;
+  --color-footer-bg: #ffffff;
+  --color-footer-text: #14161a;
+  --color-footer-muted: color-mix(in srgb, var(--color-footer-text) 74%, var(--color-footer-bg));
+  --color-footer-line: color-mix(in srgb, var(--color-footer-text) 14%, var(--color-footer-bg));
+
   /* Bindu Tech green, from the logo: #016952 at 600. */
   --color-brand-50: #e7f4f0;
   --color-brand-100: #cfe9e1;

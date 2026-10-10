@@ -18,6 +18,7 @@ export function ReviewsSection({
   canReview,
   alreadyReviewed,
   signedIn,
+  inTab = false,
 }: {
   productId: string;
   reviews: Review[];
@@ -26,6 +27,8 @@ export function ReviewsSection({
   canReview: boolean;
   alreadyReviewed: boolean;
   signedIn: boolean;
+  /** Inside the product tabs: the tab supplies the spacing, label and anchor. */
+  inTab?: boolean;
 }) {
   const buckets = [5, 4, 3, 2, 1].map((star) => ({
     star,
@@ -34,8 +37,11 @@ export function ReviewsSection({
   const shown = reviews.length || 1;
 
   return (
-    <section className="mt-12 border-t border-line pt-10" id="reviews">
-      <h2 className="text-lg font-bold tracking-tight text-ink">
+    <section
+      className={inTab ? undefined : "mt-12 border-t border-line pt-10"}
+      id={inTab ? undefined : "reviews"}
+    >
+      <h2 className={inTab ? "sr-only" : "text-lg font-bold tracking-tight text-ink"}>
         Ratings & reviews
       </h2>
 

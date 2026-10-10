@@ -219,6 +219,14 @@ export async function saveProduct(
     description: d.description || null,
     warranty: d.warranty || null,
     delivery_note: d.delivery_note || null,
+    // Only written when the form carried the boxes, so a tab opened before
+    // they existed cannot quietly untick both on its next save.
+    ...(formData.has("product_info__on")
+      ? {
+          show_warranty: formData.get("show_warranty") === "on",
+          show_replacement: formData.get("show_replacement") === "on",
+        }
+      : {}),
     // The uploader posts the pictures in display order; the first is the main
     // one. With the uploader on the form, no pictures means none — removing
     // the last one must clear the thumbnail, not quietly keep the old one.
@@ -1344,6 +1352,7 @@ export async function saveSiteTheme(
     bodyFont: String(formData.get("bodyFont") ?? ""),
     radius: Number(formData.get("radius")),
     colors,
+    showStoreName: formData.get("showStoreName") === "on",
   });
 
   const db = createAdminClient();

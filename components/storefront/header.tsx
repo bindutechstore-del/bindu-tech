@@ -5,6 +5,7 @@ import { Phone, Heart, Package, Percent, ArrowRight, type LucideIcon } from "luc
 import * as Icons from "lucide-react";
 import { getCategories } from "@/lib/queries/catalog";
 import { getStoreSettings } from "@/lib/queries/settings";
+import { getSiteTheme } from "@/lib/queries/theme";
 import { getRequestCartQuote } from "@/lib/cart/quote";
 import { getSessionUser, isStaffRole } from "@/lib/auth/session";
 import { SearchBox } from "./search-box";
@@ -19,12 +20,15 @@ function categoryIcon(name: string | null): LucideIcon {
 }
 
 export async function Header() {
-  const [categories, settings, quote, user] = await Promise.all([
+  const [categories, settings, quote, user, theme] = await Promise.all([
     getCategories(),
     getStoreSettings(),
     getRequestCartQuote(),
     getSessionUser(),
+    getSiteTheme(),
   ]);
+  // Without a logo the name is the only mark, so it always shows.
+  const showName = theme.showStoreName || !settings.logo_url;
 
   const topLevel = categories.filter((c) => !c.parent_id);
 
@@ -63,27 +67,36 @@ export async function Header() {
         {/* Named by its content (the logo's alt text), so what is read out
             matches what is shown. */}
         <Link href="/" className="flex shrink-0 flex-col">
-          {/* The uploaded logo when there is one (admin → Settings), else the
-              name as text. */}
-          {settings.logo_url ? (
-            <span className="relative block h-8 w-[132px] sm:h-9 sm:w-[150px]">
-              <Image
-                src={settings.logo_url}
-                alt={settings.store_name}
-                fill
-                loading="eager"
-                sizes="150px"
-                className="object-contain object-left"
-              />
-            </span>
-          ) : (
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-xl font-bold tracking-tight text-ink">
+          {/* Logo (admin → Settings) and/or the shop name (admin → Design).
+              A square logo mark gets a square box with the name beside it; a
+              wide wordmark, with the name switched off, gets the full width. */}
+          <span className="flex items-center gap-2">
+            {settings.logo_url ? (
+              <span
+                className={
+                  showName
+                    ? "relative block size-9 shrink-0 sm:size-10"
+                    : "relative block h-8 w-[132px] sm:h-9 sm:w-[150px]"
+                }
+              >
+                <Image
+                  src={settings.logo_url}
+                  // Decorative when the name is written beside it, so the link
+                  // is not read out as "Bindu Tech Bindu Tech".
+                  alt={showName ? "" : settings.store_name}
+                  fill
+                  loading="eager"
+                  sizes={showName ? "40px" : "150px"}
+                  className="object-contain object-left"
+                />
+              </span>
+            ) : null}
+            {showName ? (
+              <span className="text-lg font-bold leading-none tracking-tight text-store-name sm:text-xl">
                 {settings.store_name}
               </span>
-              <span className="hidden h-1.5 w-1.5 rounded-full bg-brand-600 sm:block" />
-            </div>
-          )}
+            ) : null}
+          </span>
           <span className="text-[9px] leading-tight tracking-wide text-ink-faint">
             Developed by Nafis Hossain Momen
           </span>

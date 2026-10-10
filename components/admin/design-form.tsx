@@ -38,6 +38,8 @@ function readabilityProblems(c: SiteTheme["colors"]): string[] {
     ["Text on Page background", c.ink, c.surfaceSunken],
     ["Success messages on Surface", c.success, c.surface],
     ["Warning messages on Surface", c.warning, c.surface],
+    ["Shop name on Surface", c.storeName, c.surface],
+    ["Footer text on Footer background", c.footerText, c.footerBg],
   ];
   return checks
     .map(([what, fg, bg]) => [what, contrastRatio(fg, bg)] as const)
@@ -236,6 +238,28 @@ export function DesignForm({
           </label>
         </Card>
 
+        <Card className="p-5">
+          <h2 className="text-sm font-semibold text-ink">Header</h2>
+          <label className="mt-3 flex items-start gap-3">
+            <input
+              type="checkbox"
+              name="showStoreName"
+              checked={draft.showStoreName}
+              onChange={(e) => setDraft((d) => ({ ...d, showStoreName: e.target.checked }))}
+              className="mt-0.5 size-4 accent-brand-600"
+            />
+            <span>
+              <span className="block text-sm font-medium text-ink">
+                Show the shop name next to the logo
+              </span>
+              <span className="block text-xs text-ink-muted">
+                Keep it on for a square logo mark. Turn it off if your logo already
+                has the name written in it — the logo then gets the full width.
+              </span>
+            </span>
+          </label>
+        </Card>
+
         <div className="flex flex-wrap items-center gap-3">
           <Button type="submit" loading={pending}>
             Save design
@@ -306,7 +330,9 @@ function ThemePreview({ theme, storeName }: { theme: SiteTheme; storeName: strin
           className="flex items-center justify-between px-4 py-3"
           style={{ background: c.surface, borderBottom: `1px solid ${c.surfaceSunken}` }}
         >
-          <span className="text-sm font-bold">{storeName}</span>
+          <span className="text-sm font-bold" style={{ color: c.storeName }}>
+            {theme.showStoreName ? storeName : "Logo"}
+          </span>
           <span
             className="rounded-full px-2 py-0.5 text-[10px] font-bold text-white"
             style={{ background: c.danger }}
@@ -365,6 +391,11 @@ function ThemePreview({ theme, storeName }: { theme: SiteTheme; storeName: strin
               Pending
             </span>
           </div>
+        </div>
+
+        <div className="px-4 py-3 text-xs" style={{ background: c.footerBg, color: c.footerText }}>
+          <p className="font-bold">{storeName}</p>
+          <p style={{ opacity: 0.75 }}>Shop · Help · Talk to us — footer</p>
         </div>
       </div>
 

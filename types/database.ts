@@ -118,6 +118,10 @@ export interface Product {
   specifications: SpecItem[];
   features: string[];
   warranty: string | null;
+  /** Show the warranty line on the product page (0031). */
+  show_warranty: boolean;
+  /** Show the "N-day replacement" line on the product page (0031). */
+  show_replacement: boolean;
   delivery_note: string | null;
   price_paisa: number;
   compare_at_paisa: number | null;

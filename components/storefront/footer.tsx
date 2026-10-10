@@ -26,8 +26,10 @@ export async function Footer() {
   ] as const;
 
   return (
-    <footer className="mt-16 border-t border-line bg-surface">
-      <div className="border-b border-line bg-brand-50/60">
+    <footer className="mt-16 border-t border-footer-line bg-footer-bg text-footer-text">
+      {/* Colours come from admin → Design (Footer background / Footer text);
+          softer text and hairlines are mixed from those two in globals.css. */}
+      <div className="border-b border-line bg-brand-50">
         <div className="mx-auto max-w-7xl px-4 py-8">
           <div className="flex flex-col items-start justify-between gap-5 md:flex-row md:items-center">
             <div>
@@ -49,7 +51,7 @@ export async function Footer() {
             <span className="text-xl font-bold tracking-tight">{settings.store_name}</span>
             <span className="h-1.5 w-1.5 rounded-full bg-brand-600" />
           </div>
-          <p className="mt-3 text-sm leading-6 text-ink-muted">
+          <p className="mt-3 text-sm leading-6 text-footer-muted">
             {settings.store_description}
           </p>
           <div className="mt-4 flex gap-2">
@@ -59,7 +61,7 @@ export async function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Facebook"
-                className="inline-flex size-9 items-center justify-center rounded-lg border border-line text-ink-soft hover:bg-surface-sunken"
+                className="inline-flex size-9 items-center justify-center rounded-lg border border-footer-line text-footer-muted hover:bg-footer-line"
               >
                 <SocialIcon name="facebook" />
               </a>
@@ -70,7 +72,7 @@ export async function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram"
-                className="inline-flex size-9 items-center justify-center rounded-lg border border-line text-ink-soft hover:bg-surface-sunken"
+                className="inline-flex size-9 items-center justify-center rounded-lg border border-footer-line text-footer-muted hover:bg-footer-line"
               >
                 <SocialIcon name="instagram" />
               </a>
@@ -81,7 +83,7 @@ export async function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="YouTube"
-                className="inline-flex size-9 items-center justify-center rounded-lg border border-line text-ink-soft hover:bg-surface-sunken"
+                className="inline-flex size-9 items-center justify-center rounded-lg border border-footer-line text-footer-muted hover:bg-footer-line"
               >
                 <SocialIcon name="youtube" />
               </a>
@@ -90,10 +92,10 @@ export async function Footer() {
         </div>
 
         <div>
-          <h3 className="text-sm font-semibold text-ink">Shop</h3>
+          <h3 className="text-sm font-semibold text-footer-text">Shop</h3>
           <ul className="mt-3 space-y-2 text-sm">
             <li>
-              <Link href="/products" className="text-ink-muted hover:text-brand-700">
+              <Link href="/products" className="text-footer-muted hover:text-footer-text hover:underline">
                 All products
               </Link>
             </li>
@@ -101,7 +103,7 @@ export async function Footer() {
               <li key={c.id}>
                 <Link
                   href={`/products?category=${c.slug}`}
-                  className="text-ink-muted hover:text-brand-700"
+                  className="text-footer-muted hover:text-footer-text hover:underline"
                 >
                   {c.name}
                 </Link>
@@ -111,57 +113,57 @@ export async function Footer() {
         </div>
 
         <div>
-          <h3 className="text-sm font-semibold text-ink">Help</h3>
+          <h3 className="text-sm font-semibold text-footer-text">Help</h3>
           <ul className="mt-3 space-y-2 text-sm">
             <li>
-              <Link href="/track" className="text-ink-muted hover:text-brand-700">
+              <Link href="/track" className="text-footer-muted hover:text-footer-text hover:underline">
                 Track your order
               </Link>
             </li>
             {policies.map(([href, label]) => (
               <li key={href}>
-                <Link href={href} className="text-ink-muted hover:text-brand-700">
+                <Link href={href} className="text-footer-muted hover:text-footer-text hover:underline">
                   {label}
                 </Link>
               </li>
             ))}
             <li>
-              <RequestProductButton className="inline-flex items-center gap-1.5 text-ink-muted hover:text-brand-700 [&_svg]:size-4" />
+              <RequestProductButton className="inline-flex items-center gap-1.5 text-footer-muted hover:text-footer-text hover:underline [&_svg]:size-4" />
             </li>
           </ul>
         </div>
 
         <div>
-          <h3 className="text-sm font-semibold text-ink">Talk to us</h3>
-          <ul className="mt-3 space-y-3 text-sm text-ink-muted">
+          <h3 className="text-sm font-semibold text-footer-text">Talk to us</h3>
+          <ul className="mt-3 space-y-3 text-sm text-footer-muted">
             {/* Each line only when Settings has something to put on it. The
                 email line needs a real address: "bindutech.com" made a
                 mailto: link that opened an email to nobody. */}
             {settings.support_phone ? (
               <li className="flex gap-2">
-                <Phone size={15} className="mt-0.5 shrink-0 text-ink-faint" />
-                <a href={`tel:${settings.support_phone}`} className="hover:text-brand-700">
+                <Phone size={15} className="mt-0.5 shrink-0 text-footer-muted" />
+                <a href={`tel:${settings.support_phone}`} className="hover:text-footer-text hover:underline">
                   {settings.support_phone}
                 </a>
               </li>
             ) : null}
             {settings.support_email.includes("@") ? (
               <li className="flex gap-2">
-                <Mail size={15} className="mt-0.5 shrink-0 text-ink-faint" />
-                <a href={`mailto:${settings.support_email}`} className="hover:text-brand-700">
+                <Mail size={15} className="mt-0.5 shrink-0 text-footer-muted" />
+                <a href={`mailto:${settings.support_email}`} className="hover:text-footer-text hover:underline">
                   {settings.support_email}
                 </a>
               </li>
             ) : null}
             {settings.support_hours ? (
               <li className="flex gap-2">
-                <Clock size={15} className="mt-0.5 shrink-0 text-ink-faint" />
+                <Clock size={15} className="mt-0.5 shrink-0 text-footer-muted" />
                 <span>{settings.support_hours}</span>
               </li>
             ) : null}
             {settings.showroom_address.trim() ? (
               <li className="flex gap-2">
-                <MapPin size={15} className="mt-0.5 shrink-0 text-ink-faint" />
+                <MapPin size={15} className="mt-0.5 shrink-0 text-footer-muted" />
                 <span>{settings.showroom_address}</span>
               </li>
             ) : null}
@@ -170,20 +172,20 @@ export async function Footer() {
       </div>
 
       {/* Delivery charges are data from delivery_zones, not a hardcoded table. */}
-      <div className="border-t border-line bg-surface-sunken">
+      <div className="border-t border-footer-line">
         <div className="mx-auto max-w-7xl px-4 py-6">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-footer-muted">
             Delivery charges
           </h3>
           <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {zones.map((z) => (
-              <div key={z.id} className="rounded-lg border border-line bg-surface p-3">
-                <p className="text-sm font-medium text-ink">{z.name}</p>
-                <p className="mt-0.5 text-sm text-ink-soft tabular">
+              <div key={z.id} className="rounded-lg border border-footer-line p-3">
+                <p className="text-sm font-medium text-footer-text">{z.name}</p>
+                <p className="mt-0.5 text-sm text-footer-muted tabular">
                   {formatTaka(z.fee_paisa)} · {z.min_days}–{z.max_days} days
                 </p>
                 {z.free_above_paisa ? (
-                  <p className="mt-0.5 text-xs text-success">
+                  <p className="mt-0.5 text-xs font-medium text-footer-text">
                     Free over {formatTaka(z.free_above_paisa)}
                   </p>
                 ) : null}
@@ -193,13 +195,13 @@ export async function Footer() {
         </div>
       </div>
 
-      <div className="border-t border-line">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-5 text-xs text-ink-muted sm:flex-row">
+      <div className="border-t border-footer-line">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-5 text-xs text-footer-muted sm:flex-row">
           <div className="flex flex-col items-center gap-1 sm:items-start">
             <p>
               © {new Date().getFullYear()} {settings.store_name}. All rights reserved.
             </p>
-            <p className="text-ink-faint">Developed by Nafis Hossain Momen</p>
+            <p className="text-footer-muted">Developed by Nafis Hossain Momen</p>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-warning/30 bg-warning-soft px-2.5 py-1 text-[11px] font-semibold text-warning">

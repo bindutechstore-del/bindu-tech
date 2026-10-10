@@ -26,7 +26,7 @@ export const PRODUCT_CARD_COLUMNS =
 
 const PRODUCT_DETAIL_COLUMNS =
   PRODUCT_CARD_COLUMNS +
-  ", description, specifications, features, warranty, delivery_note, video_url, created_at, updated_at";
+  ", description, specifications, features, warranty, show_warranty, show_replacement, delivery_note, video_url, created_at, updated_at";
 
 export type ProductCard = Pick<
   Product,

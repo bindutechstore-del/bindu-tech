@@ -18,6 +18,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Gallery } from "@/components/product/gallery";
 import { BuyBox } from "@/components/product/buy-box";
 import { ReviewsSection } from "@/components/product/reviews-section";
+import { ProductTabs } from "@/components/product/product-tabs";
 import { RecentlyViewedTracker } from "@/components/product/recently-viewed";
 import { Section, ProductRail } from "@/components/storefront/sections";
 import { Rating, Badge } from "@/components/ui/primitives";
@@ -278,29 +279,37 @@ export default async function ProductPage({
 
           {/* Warranty and returns — the other two questions every BD shopper
               asks before agreeing to cash on delivery. */}
-          <div className="mt-4 divide-y divide-line rounded-xl border border-line bg-surface">
-            <div className="flex gap-3 p-4">
-              <ShieldCheck size={18} className="mt-0.5 shrink-0 text-success" />
-              <div className="text-sm">
-                <p className="font-medium text-ink">
-                  {product.warranty ?? "Official warranty"}
-                </p>
-                <p className="mt-0.5 text-ink-muted">{settings.warranty_note}</p>
-              </div>
-            </div>
+          {/* Each line can be hidden per product (admin → product form): not
+              everything we sell carries a warranty. */}
+          {product.show_warranty || product.show_replacement ? (
+            <div className="mt-4 divide-y divide-line rounded-xl border border-line bg-surface">
+              {product.show_warranty ? (
+                <div className="flex gap-3 p-4">
+                  <ShieldCheck size={18} className="mt-0.5 shrink-0 text-success" />
+                  <div className="text-sm">
+                    <p className="font-medium text-ink">
+                      {product.warranty ?? "Official warranty"}
+                    </p>
+                    <p className="mt-0.5 text-ink-muted">{settings.warranty_note}</p>
+                  </div>
+                </div>
+              ) : null}
 
-            <div className="flex gap-3 p-4">
-              <RotateCcw size={18} className="mt-0.5 shrink-0 text-warning" />
-              <div className="text-sm">
-                <p className="font-medium text-ink">
-                  {settings.return_window_days}-day replacement
-                </p>
-                <p className="mt-0.5 text-ink-muted">
-                  Dead-on-arrival, wrong variant or a defect — we swap it, no argument.
-                </p>
-              </div>
+              {product.show_replacement ? (
+                <div className="flex gap-3 p-4">
+                  <RotateCcw size={18} className="mt-0.5 shrink-0 text-warning" />
+                  <div className="text-sm">
+                    <p className="font-medium text-ink">
+                      {settings.return_window_days}-day replacement
+                    </p>
+                    <p className="mt-0.5 text-ink-muted">
+                      Dead-on-arrival, wrong variant or a defect — we swap it, no argument.
+                    </p>
+                  </div>
+                </div>
+              ) : null}
             </div>
-          </div>
+          ) : null}
 
           {lowStock ? (
             <p className="mt-4 rounded-lg border border-warning/20 bg-warning-soft px-3 py-2 text-sm font-medium text-warning">
@@ -310,62 +319,90 @@ export default async function ProductPage({
         </div>
       </div>
 
-      {product.features.length > 0 ? (
-        <section className="mt-12">
-          <h2 className="text-lg font-bold tracking-tight text-ink">Key features</h2>
-          <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-            {product.features.map((f) => (
-              <li key={f} className="flex gap-2 text-sm text-ink-soft">
-                <Check size={16} className="mt-0.5 shrink-0 text-success" />
-                {f}
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-
-      {product.description ? (
-        <section className="mt-10">
-          <h2 className="text-lg font-bold tracking-tight text-ink">Description</h2>
-          <div className="mt-3 max-w-3xl whitespace-pre-line text-sm leading-7 text-ink-soft">
-            {product.description}
-          </div>
-        </section>
-      ) : null}
-
-      {specs.length > 0 ? (
-        <section className="mt-10">
-          <h2 className="text-lg font-bold tracking-tight text-ink">
-            Full specifications
-          </h2>
-          <div className="mt-3 max-w-3xl overflow-hidden rounded-xl border border-line">
-            <table className="w-full text-sm">
-              <tbody className="divide-y divide-line">
-                {specs.map((s, i) => (
-                  <tr key={`${s.label}-${i}`} className={i % 2 ? "bg-surface" : "bg-surface-sunken"}>
-                    <th
-                      scope="row"
-                      className="w-2/5 px-4 py-2.5 text-left font-medium text-ink-soft"
-                    >
-                      {s.label}
-                    </th>
-                    <td className="px-4 py-2.5 text-ink">{s.value}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      ) : null}
-
-      <ReviewsSection
-        productId={product.id}
-        reviews={reviews}
-        rating={rating}
-        ratingCount={product.rating_count}
-        canReview={canReview}
-        alreadyReviewed={alreadyReviewed}
-        signedIn={Boolean(user)}
+      {/* Description first (key features under it), then the specification
+          table, then reviews — as tabs, so the page stays short on a phone. */}
+      <ProductTabs
+        tabs={[
+          ...(product.description || product.features.length > 0
+            ? [
+                {
+                  id: "description",
+                  label: "Description",
+                  content: (
+                    <div className="max-w-3xl">
+                      {product.description ? (
+                        <div className="whitespace-pre-line text-sm leading-7 text-ink-soft">
+                          {product.description}
+                        </div>
+                      ) : null}
+                      {product.features.length > 0 ? (
+                        <div className={product.description ? "mt-8" : undefined}>
+                          <h2 className="text-base font-bold tracking-tight text-ink">
+                            Key features
+                          </h2>
+                          <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+                            {product.features.map((f) => (
+                              <li key={f} className="flex gap-2 text-sm text-ink-soft">
+                                <Check size={16} className="mt-0.5 shrink-0 text-success" />
+                                {f}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : null}
+                    </div>
+                  ),
+                },
+              ]
+            : []),
+          ...(specs.length > 0
+            ? [
+                {
+                  id: "specifications",
+                  label: "Specifications",
+                  content: (
+                    <div className="max-w-3xl overflow-hidden rounded-xl border border-line">
+                      <table className="w-full text-sm">
+                        <caption className="sr-only">Full specifications</caption>
+                        <tbody className="divide-y divide-line">
+                          {specs.map((s, i) => (
+                            <tr
+                              key={`${s.label}-${i}`}
+                              className={i % 2 ? "bg-surface" : "bg-surface-sunken"}
+                            >
+                              <th
+                                scope="row"
+                                className="w-2/5 px-4 py-2.5 text-left font-medium text-ink-soft"
+                              >
+                                {s.label}
+                              </th>
+                              <td className="px-4 py-2.5 text-ink">{s.value}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ),
+                },
+              ]
+            : []),
+          {
+            id: "reviews",
+            label: product.rating_count > 0 ? `Reviews (${product.rating_count})` : "Reviews",
+            content: (
+              <ReviewsSection
+                productId={product.id}
+                reviews={reviews}
+                rating={rating}
+                ratingCount={product.rating_count}
+                canReview={canReview}
+                alreadyReviewed={alreadyReviewed}
+                signedIn={Boolean(user)}
+                inTab
+              />
+            ),
+          },
+        ]}
       />
 
       {related.length > 0 ? (

@@ -1,15 +1,22 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Check, MessageCircle } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { CONTENT_PAGES, getContentPage, withStoreName } from "@/lib/content/pages";
+import { blocksFromPage } from "@/lib/content/blocks";
+import { getPageOverride } from "@/lib/queries/content";
 import { getDeliveryZones, getStoreSettings } from "@/lib/queries/settings";
+import { PageBanner, PageBlocks } from "@/components/content/page-blocks";
 import { Card } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
 import { formatTaka } from "@/lib/utils/money";
 
 /**
- * Policy and information pages, rendered from lib/content/pages.ts.
+ * Information pages: About, FAQ, shipping, returns, warranty, privacy …
+ *
+ * The shop owner's own version from admin → Pages when there is one, else
+ * the built-in text in lib/content/pages.ts. Both are drawn by the same block
+ * renderer, so an edited page looks like the rest of the site.
  *
  * This is a single-segment catch-all, so it only ever matches paths that no
  * static route claimed — /cart, /products, /sign-in and friends all win first.
@@ -19,18 +26,32 @@ export function generateStaticParams() {
   return CONTENT_PAGES.map((p) => ({ slug: p.slug }));
 }
 
+async function loadPage(slug: string) {
+  const raw = getContentPage(slug);
+  if (!raw) return null;
+  const [settings, override] = await Promise.all([getStoreSettings(), getPageOverride(slug)]);
+  const builtIn = withStoreName(raw, settings.store_name);
+  const content = override ?? {
+    title: builtIn.title,
+    subtitle: builtIn.intro ?? "",
+    description: builtIn.description,
+    bannerColor: "",
+    blocks: blocksFromPage(builtIn),
+  };
+  return { raw, settings, content };
+}
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const raw = getContentPage(slug);
-  if (!raw) return { title: "Not found" };
-  const page = withStoreName(raw, (await getStoreSettings()).store_name);
+  const page = await loadPage(slug);
+  if (!page) return { title: "Not found" };
   return {
-    title: page.title,
-    description: page.description,
+    title: page.content.title,
+    description: page.content.description || page.content.subtitle.slice(0, 160) || undefined,
     alternates: { canonical: `/${slug}` },
   };
 }
@@ -41,14 +62,11 @@ export default async function ContentPageRoute({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const raw = getContentPage(slug);
-  if (!raw) notFound();
+  const page = await loadPage(slug);
+  if (!page) notFound();
+  const { raw, settings, content } = page;
 
-  const [settings, zones] = await Promise.all([
-    getStoreSettings(),
-    raw.showDeliveryTable ? getDeliveryZones() : Promise.resolve([]),
-  ]);
-  const page = withStoreName(raw, settings.store_name);
+  const zones = raw.showDeliveryTable ? await getDeliveryZones() : [];
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
@@ -57,15 +75,12 @@ export default async function ContentPageRoute({
           Home
         </Link>
         <span className="mx-1.5">/</span>
-        <span className="text-ink">{page.title}</span>
+        <span className="text-ink">{content.title}</span>
       </nav>
 
-      <h1 className="text-3xl font-bold tracking-tight text-ink">{page.title}</h1>
-      {page.intro ? (
-        <p className="mt-3 text-base leading-7 text-ink-soft">{page.intro}</p>
-      ) : null}
+      <PageBanner title={content.title} subtitle={content.subtitle} color={content.bannerColor} />
 
-      {page.showDeliveryTable && zones.length > 0 ? (
+      {raw.showDeliveryTable && zones.length > 0 ? (
         <Card className="mt-6 overflow-x-auto">
           <table className="w-full min-w-125 text-sm">
             <thead>
@@ -103,54 +118,8 @@ export default async function ContentPageRoute({
         </Card>
       ) : null}
 
-      <div className="mt-8 space-y-8">
-        {page.sections.map((section, i) => (
-          <section key={section.heading ?? i}>
-            {section.heading ? (
-              <h2 className="text-lg font-bold tracking-tight text-ink">
-                {section.heading}
-              </h2>
-            ) : null}
-
-            {section.body?.map((p, j) => (
-              <p key={j} className="mt-2 text-[15px] leading-7 text-ink-soft">
-                {p}
-              </p>
-            ))}
-
-            {section.points ? (
-              <ul className="mt-3 space-y-2">
-                {section.points.map((point) => (
-                  <li key={point} className="flex gap-2 text-[15px] leading-7 text-ink-soft">
-                    <Check size={17} className="mt-1.5 shrink-0 text-success" />
-                    {point}
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-
-            {section.faqs ? (
-              <div className="space-y-2">
-                {section.faqs.map((f) => (
-                  <details
-                    key={f.q}
-                    className="group rounded-xl border border-line bg-surface p-4 open:shadow-card"
-                  >
-                    <summary className="cursor-pointer list-none text-[15px] font-medium text-ink marker:content-none">
-                      <span className="flex items-start justify-between gap-3">
-                        {f.q}
-                        <span className="mt-1 shrink-0 text-ink-faint transition-transform group-open:rotate-45">
-                          +
-                        </span>
-                      </span>
-                    </summary>
-                    <p className="mt-2.5 text-[15px] leading-7 text-ink-muted">{f.a}</p>
-                  </details>
-                ))}
-              </div>
-            ) : null}
-          </section>
-        ))}
+      <div className="mt-8">
+        <PageBlocks blocks={content.blocks} />
       </div>
 
       <Card className="mt-10 flex flex-wrap items-center justify-between gap-3 p-5">
