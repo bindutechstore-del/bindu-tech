@@ -34,7 +34,11 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
-  if (!product) return { title: "Product not found", robots: { index: false } };
+  // notFound() here, not a "Not found" title: metadata is resolved before the
+  // first byte (htmlLimitedBots in next.config), so this makes the response a
+  // real 404. Returning a title let the page stream with status 200, which
+  // Google counts as a soft 404 — and /favicon.ico was answered with a page.
+  if (!product || product.status !== "active") notFound();
 
   // "<name> price in Bangladesh" is how shoppers here search for a product,
   // so the title says exactly that; the layout template adds "| Bindu Tech".
