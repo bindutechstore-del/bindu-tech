@@ -44,13 +44,34 @@ export function isManualFlow(id: PaymentMethod): boolean {
  * ("we are live on bKash"); `isConfigured()` is the technical reality ("the
  * keys are present"). A provider missing either is hidden, never shown broken.
  */
-export function enabledProviders(): PaymentProvider[] {
-  const allowed = (process.env.PAYMENTS_ENABLED_PROVIDERS ?? "cod")
+/**
+ * The method ids PAYMENTS_ENABLED_PROVIDERS switches on.
+ *
+ * A value naming no method we know is a broken setting, not a decision to
+ * stop trading: after the October 2026 move between Vercel projects the
+ * variable held an encrypted blob, checkout offered no payment method at all
+ * and every order failed with "Please check the highlighted fields". So an
+ * unreadable value falls back to cash on delivery — which needs no
+ * credentials — and says so in the logs.
+ */
+function allowedIds(): string[] {
+  const raw = process.env.PAYMENTS_ENABLED_PROVIDERS ?? "cod";
+  const ids = raw
     .split(",")
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
+  const known = ids.filter((id) => id in ALL_PROVIDERS);
+  if (known.length === 0) {
+    console.error(
+      `PAYMENTS_ENABLED_PROVIDERS names no known method (${raw.slice(0, 40)}…); falling back to cod`,
+    );
+    return ["cod"];
+  }
+  return known;
+}
 
-  return allowed
+export function enabledProviders(): PaymentProvider[] {
+  return allowedIds()
     .map((id) => ALL_PROVIDERS[id])
     .filter((p): p is PaymentProvider => Boolean(p) && p.isConfigured());
 }
@@ -58,11 +79,7 @@ export function enabledProviders(): PaymentProvider[] {
 export function getProvider(id: PaymentMethod): PaymentProvider | null {
   const provider = ALL_PROVIDERS[id];
   if (!provider || !provider.isConfigured()) return null;
-
-  const allowed = (process.env.PAYMENTS_ENABLED_PROVIDERS ?? "cod")
-    .split(",")
-    .map((s) => s.trim().toLowerCase());
-  return allowed.includes(id) ? provider : null;
+  return allowedIds().includes(id) ? provider : null;
 }
 
 /**

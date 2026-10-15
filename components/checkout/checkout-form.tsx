@@ -668,6 +668,16 @@ export function CheckoutForm({
             </p>
           ) : null}
 
+          {/* Never a form that can only fail: with no method switched on,
+              say so plainly instead of letting the order bounce off the
+              validator with nothing highlighted. */}
+          {paymentOptions.length === 0 ? (
+            <p role="alert" className="mt-3 rounded-lg border border-danger/20 bg-danger-soft px-3 py-2 text-sm text-danger">
+              Ordering online is paused — no payment method is switched on. Please call
+              or message us to order.
+            </p>
+          ) : null}
+
           <div className="mt-3 space-y-2">
             {paymentOptions.map((o) => {
               const Icon =
@@ -701,6 +711,12 @@ export function CheckoutForm({
               );
             })}
           </div>
+
+          {state.fieldErrors?.payment_method ? (
+            <p role="alert" className="mt-2 text-xs text-danger">
+              Choose how you want to pay.
+            </p>
+          ) : null}
 
           {codBlocked ? (
             <p className="mt-3 rounded-lg border border-warning/20 bg-warning-soft px-3 py-2 text-xs leading-5 text-warning">
@@ -926,7 +942,7 @@ export function CheckoutForm({
             size="lg"
             block
             loading={pending}
-            disabled={!district}
+            disabled={!district || paymentOptions.length === 0}
             className="mt-4"
           >
             Place order
