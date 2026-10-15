@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { startTransition, useActionState } from "react";
 import Link from "next/link";
 import { signIn, type AuthState } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,15 @@ export function SignInForm({ next }: { next: string }) {
   const [state, action, pending] = useActionState(signIn, initial);
 
   return (
-    <form action={action} className="mt-6 space-y-4">
+    <form
+      action={action}
+      // No React 19 auto-reset: a rejected submit keeps what was typed.
+      onSubmit={(e) => {
+        e.preventDefault();
+        const data = new FormData(e.currentTarget);
+        startTransition(() => action(data));
+      }}
+      className="mt-6 space-y-4">
       <input type="hidden" name="next" value={next} />
 
       <Field label="Email" htmlFor="email" required error={state.fieldErrors?.email}>

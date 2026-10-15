@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { startTransition, useActionState } from "react";
 import { MailCheck } from "lucide-react";
 import { signUp, type AuthState } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,15 @@ export function SignUpForm({ referralCode = "" }: { referralCode?: string }) {
   }
 
   return (
-    <form action={action} className="mt-6 space-y-4">
+    <form
+      action={action}
+      // No React 19 auto-reset: a rejected submit keeps what was typed.
+      onSubmit={(e) => {
+        e.preventDefault();
+        const data = new FormData(e.currentTarget);
+        startTransition(() => action(data));
+      }}
+      className="mt-6 space-y-4">
       {/* Carried from ?ref= on the invite link. Validated server-side by
           claim_referral, which ignores anything it does not recognise. */}
       {referralCode ? (

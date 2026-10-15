@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { startTransition, useActionState } from "react";
 import { updateProfile, type ActionState } from "@/lib/actions/account";
 import { Button } from "@/components/ui/button";
 import { Input, Field } from "@/components/ui/field";
@@ -23,7 +23,15 @@ export function ProfileForm({
 
   return (
     <Card className="p-5">
-      <form action={action} className="space-y-4">
+      <form
+        action={action}
+        // No React 19 auto-reset: a rejected submit keeps what was typed.
+        onSubmit={(e) => {
+          e.preventDefault();
+          const data = new FormData(e.currentTarget);
+          startTransition(() => action(data));
+        }}
+        className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Full name" htmlFor="full_name">
             <Input id="full_name" name="full_name" defaultValue={fullName} />

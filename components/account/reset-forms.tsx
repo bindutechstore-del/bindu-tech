@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { startTransition, useActionState, useEffect, useState } from "react";
 import { MailCheck } from "lucide-react";
 import {
   requestPasswordReset,
@@ -26,7 +26,15 @@ export function ResetRequestForm() {
   }
 
   return (
-    <form action={action} className="mt-6 space-y-4">
+    <form
+      action={action}
+      // No React 19 auto-reset: a rejected submit keeps what was typed.
+      onSubmit={(e) => {
+        e.preventDefault();
+        const data = new FormData(e.currentTarget);
+        startTransition(() => action(data));
+      }}
+      className="mt-6 space-y-4">
       <Field label="Email" htmlFor="email" required>
         <Input
           id="email"
@@ -80,7 +88,15 @@ export function UpdatePasswordForm() {
   }
 
   return (
-    <form action={action} className="mt-6 space-y-4">
+    <form
+      action={action}
+      // No React 19 auto-reset: a rejected submit keeps what was typed.
+      onSubmit={(e) => {
+        e.preventDefault();
+        const data = new FormData(e.currentTarget);
+        startTransition(() => action(data));
+      }}
+      className="mt-6 space-y-4">
       <Field
         label="New password"
         htmlFor="password"

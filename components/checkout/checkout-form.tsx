@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState, useTransition } from "react";
+import { startTransition, useActionState, useEffect, useState, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import * as Icons from "lucide-react";
@@ -188,7 +188,19 @@ export function CheckoutForm({
     method === "cod" && quote.total_paisa > codAdvanceThresholdPaisa;
 
   return (
-    <form action={action} className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
+    <form
+      action={action}
+      // React 19 resets a form after its action runs, even when the action
+      // only returned "check the highlighted fields" — the customer lost the
+      // name, phone and address they had typed. Submitting through a
+      // transition keeps everything they entered on screen.
+      onSubmit={(e) => {
+        e.preventDefault();
+        const data = new FormData(e.currentTarget);
+        startTransition(() => action(data));
+      }}
+      className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]"
+    >
       <div className="space-y-6">
         {addresses.length > 0 ? (
           <section className="rounded-xl border border-line bg-surface p-5">
