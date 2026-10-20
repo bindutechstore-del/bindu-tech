@@ -2,9 +2,16 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { ArrowDown, ArrowUp, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Bold, Plus, RotateCcw, Trash2, Underline } from "lucide-react";
 import { saveContentPage, resetContentPage } from "@/lib/actions/content-pages";
-import { TONES, TONE_INFO, type Block, type PageContent, type Tone } from "@/lib/content/blocks";
+import {
+  TEXT_COLORS,
+  TONES,
+  TONE_INFO,
+  type Block,
+  type PageContent,
+  type Tone,
+} from "@/lib/content/blocks";
 import { BRAND_PALETTE, contrastRatio } from "@/lib/theme/schema";
 import { PageBanner, PageBlocks } from "@/components/content/page-blocks";
 import { Card } from "@/components/ui/primitives";
@@ -22,7 +29,8 @@ const TONE_DOT: Record<Tone, string> = {
 };
 
 const BLOCK_LABEL: Record<Block["type"], string> = {
-  heading: "Heading",
+  heading: "Title",
+  subheading: "Subtitle",
   paragraph: "Paragraph",
   list: "Ticked list",
   callout: "Notice box",
@@ -57,6 +65,7 @@ export function PageEditor({
   const [subtitle, setSubtitle] = useState(initial.subtitle);
   const [description, setDescription] = useState(initial.description);
   const [bannerColor, setBannerColor] = useState(initial.bannerColor);
+  const [boxed, setBoxed] = useState(initial.boxed);
   const [blocks, setBlocks] = useState<Item[]>(() => initial.blocks.map(tag));
   const [dirty, setDirty] = useState(false);
   const [pending, start] = useTransition();
@@ -111,6 +120,7 @@ export function PageEditor({
     subtitle,
     description,
     bannerColor,
+    boxed,
     blocks: blocks.map(({ _id, ...b }) => b as Block),
   };
 
@@ -144,12 +154,11 @@ export function PageEditor({
           </label>
           <label className="block">
             <span className="mb-1 block text-sm font-medium text-ink">Subtitle</span>
-            <Textarea
+            <RichTextarea
               value={subtitle}
               rows={2}
-              maxLength={600}
               placeholder="One or two lines under the title — Bangla and English both fine"
-              onChange={(e) => touch(setSubtitle)(e.target.value)}
+              onChange={touch(setSubtitle)}
             />
           </label>
           <label className="block">
@@ -199,11 +208,26 @@ export function PageEditor({
               </div>
             ) : null}
           </div>
+
+          <label className="flex items-start gap-2 text-sm text-ink">
+            <input
+              type="checkbox"
+              checked={boxed}
+              onChange={(e) => touch(setBoxed)(e.target.checked)}
+              className="mt-0.5 size-4 accent-brand-600"
+            />
+            <span>
+              <span className="block font-medium">Put each section in its own box</span>
+              <span className="block text-xs text-ink-muted">
+                Every Title starts a new box with everything under it.
+              </span>
+            </span>
+          </label>
         </Card>
 
         <p className="text-xs text-ink-muted">
-          Tip: write <code className="rounded bg-surface-sunken px-1">**৭২ ঘণ্টার মধ্যে**</code> to make
-          words bold. Line breaks are kept.
+          Tip: select words, then press <b>B</b> for bold, <u>U</u> for underline, or a colour dot.
+          Line breaks are kept.
         </p>
 
         {blocks.map((b, i) => (
@@ -226,26 +250,27 @@ export function PageEditor({
               </span>
             </div>
 
-            {b.type === "heading" ? (
+            {b.type === "heading" || b.type === "subheading" ? (
               <Input
                 value={b.text}
                 maxLength={200}
-                placeholder="Section heading"
+                placeholder={b.type === "heading" ? "Section title" : "Subtitle"}
                 onChange={(e) => update(b._id, { text: e.target.value })}
+                className={b.type === "heading" ? "font-semibold" : undefined}
               />
             ) : b.type === "paragraph" ? (
-              <Textarea
+              <RichTextarea
                 value={b.text}
                 rows={3}
                 placeholder="Write the paragraph…"
-                onChange={(e) => update(b._id, { text: e.target.value })}
+                onChange={(v) => update(b._id, { text: v })}
               />
             ) : b.type === "list" ? (
-              <Textarea
+              <RichTextarea
                 value={b.items.join("\n")}
                 rows={4}
                 placeholder={"One point per line"}
-                onChange={(e) => update(b._id, { items: e.target.value.split("\n") })}
+                onChange={(v) => update(b._id, { items: v.split("\n") })}
               />
             ) : b.type === "callout" ? (
               <div className="space-y-2">
@@ -266,11 +291,11 @@ export function PageEditor({
                   placeholder="Box title, e.g. সতর্কীকরণ:"
                   onChange={(e) => update(b._id, { title: e.target.value })}
                 />
-                <Textarea
+                <RichTextarea
                   value={b.text}
                   rows={3}
                   placeholder="What the box says"
-                  onChange={(e) => update(b._id, { text: e.target.value })}
+                  onChange={(v) => update(b._id, { text: v })}
                 />
               </div>
             ) : (
@@ -281,11 +306,11 @@ export function PageEditor({
                   placeholder="Question"
                   onChange={(e) => update(b._id, { q: e.target.value })}
                 />
-                <Textarea
+                <RichTextarea
                   value={b.a}
                   rows={3}
                   placeholder="Answer"
-                  onChange={(e) => update(b._id, { a: e.target.value })}
+                  onChange={(v) => update(b._id, { a: v })}
                 />
               </div>
             )}
@@ -295,7 +320,8 @@ export function PageEditor({
         <Card className="p-4">
           <p className="mb-2 text-sm font-medium text-ink">Add a block</p>
           <div className="flex flex-wrap gap-2">
-            <AddButton onClick={() => add({ type: "heading", text: "" })}>Heading</AddButton>
+            <AddButton onClick={() => add({ type: "heading", text: "" })}>Title</AddButton>
+            <AddButton onClick={() => add({ type: "subheading", text: "" })}>Subtitle</AddButton>
             <AddButton onClick={() => add({ type: "paragraph", text: "" })}>Paragraph</AddButton>
             <AddButton onClick={() => add({ type: "list", items: [""] })}>Ticked list</AddButton>
             {TONES.map((t) => (
@@ -327,6 +353,7 @@ export function PageEditor({
           <PageBanner title={title || "Untitled"} subtitle={subtitle} color={bannerColor} />
           <div className="mt-6">
             <PageBlocks
+              boxed={boxed}
               blocks={content.blocks.map((b) =>
                 b.type === "list" ? { ...b, items: b.items.filter((x) => x.trim()) } : b,
               )}
@@ -335,6 +362,95 @@ export function PageEditor({
         </Card>
       </div>
     </div>
+  );
+}
+
+/**
+ * A textarea with a small formatting bar. The buttons wrap the selected words
+ * in the markers the page renderer understands — **bold**, __underline__,
+ * [red]colour[/red] — so nobody has to remember them. With nothing selected
+ * they insert a placeholder word to type over.
+ */
+function RichTextarea({
+  value,
+  onChange,
+  rows = 3,
+  placeholder,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  rows?: number;
+  placeholder?: string;
+}) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+  const wrap = (open: string, close: string) => {
+    const el = ref.current;
+    if (!el) return;
+    const a = el.selectionStart;
+    const b = el.selectionEnd;
+    const picked = value.slice(a, b) || "text";
+    onChange(value.slice(0, a) + open + picked + close + value.slice(b));
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(a + open.length, a + open.length + picked.length);
+    });
+  };
+  return (
+    <div className="overflow-hidden rounded-lg border border-line-strong bg-surface focus-within:border-brand-600 focus-within:ring-2 focus-within:ring-brand-600/15">
+      <div className="flex flex-wrap items-center gap-1 border-b border-line bg-surface-sunken px-2 py-1.5">
+        <ToolButton label="Bold" onClick={() => wrap("**", "**")}>
+          <Bold size={15} />
+        </ToolButton>
+        <ToolButton label="Underline" onClick={() => wrap("__", "__")}>
+          <Underline size={15} />
+        </ToolButton>
+        <span className="mx-1 h-5 w-px bg-line" aria-hidden />
+        {(Object.entries(TEXT_COLORS) as [keyof typeof TEXT_COLORS, string][]).map(([name, hex]) => (
+          <button
+            key={name}
+            type="button"
+            title={`${name[0].toUpperCase()}${name.slice(1)} text`}
+            aria-label={`Make the selected words ${name}`}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => wrap(`[${name}]`, `[/${name}]`)}
+            className="size-6 rounded-full border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.15)]"
+            style={{ background: hex }}
+          />
+        ))}
+      </div>
+      <textarea
+        ref={ref}
+        value={value}
+        rows={rows}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        className="block w-full resize-y bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:outline-none"
+      />
+    </div>
+  );
+}
+
+function ToolButton({
+  label,
+  onClick,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      title={label}
+      aria-label={label}
+      // Keep the textarea's selection while the button is pressed.
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={onClick}
+      className="inline-flex size-8 items-center justify-center rounded-md text-ink-soft hover:bg-surface hover:text-ink"
+    >
+      {children}
+    </button>
   );
 }
 

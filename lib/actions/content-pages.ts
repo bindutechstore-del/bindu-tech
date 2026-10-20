@@ -22,6 +22,7 @@ const pageSchema = z.object({
     .trim()
     .toLowerCase()
     .regex(/^(#[0-9a-f]{6})?$/, "Pick the banner colour from the picker"),
+  boxed: z.boolean().optional().default(false),
   blocks: z.unknown(),
 });
 
@@ -50,6 +51,7 @@ export async function saveContentPage(slug: string, input: unknown): Promise<Pag
       subtitle: d.subtitle || null,
       description: d.description || null,
       banner_color: d.bannerColor || null,
+      boxed: d.boxed,
       blocks,
       updated_by: actor.id,
     },

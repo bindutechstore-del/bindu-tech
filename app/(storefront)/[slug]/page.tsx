@@ -36,6 +36,7 @@ async function loadPage(slug: string) {
     subtitle: builtIn.intro ?? "",
     description: builtIn.description,
     bannerColor: "",
+    boxed: false,
     blocks: blocksFromPage(builtIn),
   };
   return { raw, settings, content };
@@ -123,7 +124,7 @@ export default async function ContentPageRoute({
       ) : null}
 
       <div className="mt-8">
-        <PageBlocks blocks={content.blocks} />
+        <PageBlocks blocks={content.blocks} boxed={content.boxed} />
       </div>
 
       <Card className="mt-10 flex flex-wrap items-center justify-between gap-3 p-5">

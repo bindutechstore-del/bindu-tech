@@ -11,7 +11,7 @@ export const getPageOverride = cache(async (slug: string): Promise<PageContent |
   const supabase = await createClient();
   const { data } = await supabase
     .from("content_pages")
-    .select("title, subtitle, description, banner_color, blocks")
+    .select("title, subtitle, description, banner_color, boxed, blocks")
     .eq("slug", slug)
     .maybeSingle();
   if (!data) return null;
@@ -20,6 +20,7 @@ export const getPageOverride = cache(async (slug: string): Promise<PageContent |
     subtitle: string | null;
     description: string | null;
     banner_color: string | null;
+    boxed: boolean | null;
     blocks: unknown;
   };
   return {
@@ -27,6 +28,7 @@ export const getPageOverride = cache(async (slug: string): Promise<PageContent |
     subtitle: row.subtitle ?? "",
     description: row.description ?? "",
     bannerColor: row.banner_color ?? "",
+    boxed: Boolean(row.boxed),
     blocks: sanitiseBlocks(row.blocks),
   };
 });

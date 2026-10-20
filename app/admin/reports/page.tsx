@@ -1,15 +1,20 @@
 import Link from "next/link";
 import { requirePermission } from "@/lib/auth/session";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getRevenueSeries } from "@/lib/queries/admin";
+import { getRevenueSeriesRange } from "@/lib/queries/admin";
 import { RevenueChart } from "@/components/admin/revenue-chart";
 import { PageHeader, Card, Badge } from "@/components/ui/primitives";
+import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/field";
 import { formatTaka, formatTakaCompact } from "@/lib/utils/money";
+import { RANGE_PRESETS, resolveRange, todayDhaka } from "@/lib/utils/report-range";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Sales and profit reporting.
+ * Sales and profit reporting, for any window: a preset (this month, last
+ * year …) or a custom From–To in Dhaka dates, optionally narrowed to one
+ * category and its sub-categories.
  *
  * Margin needs `products.cost_paisa`, which is revoked for both client roles at
  * the column level — only the service-role client can read it, which is why
@@ -18,38 +23,69 @@ export const dynamic = "force-dynamic";
 export default async function AdminReportsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ days?: string }>;
+  searchParams: Promise<{ range?: string; from?: string; to?: string; days?: string; category?: string }>;
 }) {
   await requirePermission("reports");
-  const { days } = await searchParams;
-  const window = Math.min(180, Math.max(7, Number(days) || 30));
+  const params = await searchParams;
+  const range = resolveRange(params);
+  const today = todayDhaka();
 
   const db = createAdminClient();
-  const from = new Date();
-  from.setDate(from.getDate() - window);
-  from.setHours(0, 0, 0, 0);
 
-  // Both scans are capped. A 180-day window on a busy shop is tens of
-  // thousands of rows, and pulling them all into a Vercel function is how the
-  // reports page takes the whole deployment down. Past the cap the page says
-  // the figures are partial rather than presenting a short count as the truth.
+  // Category filter: the chosen category plus every category under it.
+  const { data: catRows } = await db
+    .from("categories")
+    .select("id, name, slug, parent_id, position")
+    .order("position");
+  const categories = (catRows ?? []) as {
+    id: string;
+    name: string;
+    slug: string;
+    parent_id: string | null;
+  }[];
+  const category = categories.find((c) => c.slug === params.category) ?? null;
+  let productIds: string[] | null = null;
+  if (category) {
+    const ids = new Set([category.id]);
+    for (let grew = true; grew; ) {
+      grew = false;
+      for (const c of categories) {
+        if (c.parent_id && ids.has(c.parent_id) && !ids.has(c.id)) {
+          ids.add(c.id);
+          grew = true;
+        }
+      }
+    }
+    const { data } = await db.from("products").select("id").in("category_id", [...ids]).limit(5000);
+    productIds = ((data ?? []) as { id: string }[]).map((p) => p.id);
+  }
+
+  // Both scans are capped. A long window on a busy shop is tens of thousands
+  // of rows, and pulling them all into a Vercel function is how the reports
+  // page takes the whole deployment down. Past the cap the page says the
+  // figures are partial rather than presenting a short count as the truth.
   const ORDER_CAP = 10000;
   const LINE_CAP = 20000;
 
+  let linesQuery = db
+    .from("order_items")
+    .select("order_id, product_id, product_name, quantity, line_total_paisa, orders!inner(placed_at, status)")
+    .gte("orders.placed_at", range.fromIso)
+    .lt("orders.placed_at", range.toIsoExclusive)
+    .not("orders.status", "in", "(cancelled,returned)")
+    .limit(LINE_CAP);
+  if (productIds) linesQuery = linesQuery.in("product_id", productIds.length ? productIds : ["00000000-0000-0000-0000-000000000000"]);
+
   const [series, { data: orders }, { data: lines }] = await Promise.all([
-    getRevenueSeries(window),
+    getRevenueSeriesRange(range, productIds),
     db
       .from("orders")
       .select("id, total_paisa, subtotal_paisa, discount_paisa, delivery_fee_paisa, status, payment_method")
-      .gte("placed_at", from.toISOString())
+      .gte("placed_at", range.fromIso)
+      .lt("placed_at", range.toIsoExclusive)
       .order("placed_at", { ascending: false })
       .limit(ORDER_CAP),
-    db
-      .from("order_items")
-      .select("product_id, product_name, quantity, line_total_paisa, orders!inner(placed_at, status)")
-      .gte("orders.placed_at", from.toISOString())
-      .not("orders.status", "in", "(cancelled,returned)")
-      .limit(LINE_CAP),
+    linesQuery,
   ]);
 
   const allOrders = (orders ?? []) as {
@@ -73,15 +109,16 @@ export default async function AdminReportsPage({
   const aov = valid.length ? Math.round(revenue / valid.length) : 0;
 
   const soldLines = (lines ?? []) as unknown as {
+    order_id: string;
     product_id: string | null;
     product_name: string;
     quantity: number;
     line_total_paisa: number;
   }[];
 
-  const productIds = [...new Set(soldLines.map((l) => l.product_id).filter(Boolean))];
-  const { data: costs } = productIds.length
-    ? await db.from("products").select("id, cost_paisa").in("id", productIds)
+  const ids = [...new Set(soldLines.map((l) => l.product_id).filter(Boolean))];
+  const { data: costs } = ids.length
+    ? await db.from("products").select("id, cost_paisa").in("id", ids)
     : { data: [] };
 
   const costById = new Map(
@@ -95,7 +132,8 @@ export default async function AdminReportsPage({
     (s, l) => s + (costById.get(l.product_id ?? "") ?? 0) * l.quantity,
     0,
   );
-  const grossProfit = soldLines.reduce((s, l) => s + l.line_total_paisa, 0) - cogs;
+  const lineSales = soldLines.reduce((s, l) => s + l.line_total_paisa, 0);
+  const grossProfit = lineSales - cogs;
 
   // Per-product performance, ranked by units.
   const byProduct = new Map<
@@ -125,33 +163,60 @@ export default async function AdminReportsPage({
     byMethod.set(o.payment_method, (byMethod.get(o.payment_method) ?? 0) + 1);
   }
 
-  const windows = [7, 30, 90, 180];
-
   // Say so when a cap was hit, rather than letting a partial total read as
-  // the month's real revenue.
+  // the period's real revenue.
   const truncated =
     allOrders.length >= ORDER_CAP || soldLines.length >= LINE_CAP;
 
-  const tiles = [
-    { label: "Revenue", value: formatTakaCompact(revenue), sub: `${valid.length} orders` },
-    { label: "Gross profit", value: formatTakaCompact(grossProfit), sub: "Revenue − cost of goods" },
-    { label: "Cost of goods", value: formatTakaCompact(cogs), sub: "From product cost" },
-    { label: "Average order", value: formatTaka(aov), sub: "Per valid order" },
-    { label: "Discounts given", value: formatTakaCompact(discounts), sub: "Coupons applied" },
-    { label: "Delivery collected", value: formatTakaCompact(delivery), sub: "Shipping fees" },
-    { label: "Cancelled / returned", value: String(cancelled), sub: "Excluded from revenue" },
-    {
-      label: "Margin",
-      value: revenue > 0 ? `${Math.round((grossProfit / revenue) * 100)}%` : "—",
-      sub: "Gross profit ÷ revenue",
-    },
-  ];
+  const margin = (sales: number) =>
+    sales > 0 ? `${Math.round((grossProfit / sales) * 100)}%` : "—";
+
+  // With a category chosen, order-level figures (delivery, coupons, payment
+  // method) belong to whole orders, not to the category — so the tiles switch
+  // to what the category itself sold.
+  const categoryOrders = new Set(soldLines.map((l) => l.order_id)).size;
+  const units = soldLines.reduce((s, l) => s + l.quantity, 0);
+  const tiles = category
+    ? [
+        { label: `Sales — ${category.name}`, value: formatTakaCompact(lineSales), sub: `${categoryOrders} orders` },
+        { label: "Units sold", value: String(units), sub: "In this category" },
+        { label: "Gross profit", value: formatTakaCompact(grossProfit), sub: "Sales − cost of goods" },
+        { label: "Margin", value: margin(lineSales), sub: "Gross profit ÷ sales" },
+        { label: "Cost of goods", value: formatTakaCompact(cogs), sub: "From product cost" },
+        {
+          label: "Average per order",
+          value: formatTaka(categoryOrders ? Math.round(lineSales / categoryOrders) : 0),
+          sub: "This category's share",
+        },
+      ]
+    : [
+        { label: "Revenue", value: formatTakaCompact(revenue), sub: `${valid.length} orders` },
+        { label: "Gross profit", value: formatTakaCompact(grossProfit), sub: "Revenue − cost of goods" },
+        { label: "Cost of goods", value: formatTakaCompact(cogs), sub: "From product cost" },
+        { label: "Average order", value: formatTaka(aov), sub: "Per valid order" },
+        { label: "Discounts given", value: formatTakaCompact(discounts), sub: "Coupons applied" },
+        { label: "Delivery collected", value: formatTakaCompact(delivery), sub: "Shipping fees" },
+        { label: "Cancelled / returned", value: String(cancelled), sub: "Excluded from revenue" },
+        { label: "Margin", value: margin(revenue), sub: "Gross profit ÷ revenue" },
+      ];
+
+  const dateLabel = (ymd: string) =>
+    new Date(`${ymd}T00:00:00Z`).toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      timeZone: "UTC",
+    });
+  const presetHref = (key: string) =>
+    `/admin/reports?range=${key}${category ? `&category=${category.slug}` : ""}`;
 
   return (
     <>
       <PageHeader
         title="Reports"
-        description={`Last ${window} days. Cancelled and returned orders are excluded throughout.`}
+        description={`${range.label}: ${dateLabel(range.from)} – ${dateLabel(range.to)}${
+          category ? ` · ${category.name}` : ""
+        }. Cancelled and returned orders are excluded throughout.`}
       />
 
       {truncated ? (
@@ -165,19 +230,70 @@ export default async function AdminReportsPage({
         </p>
       ) : null}
 
-      <div className="mb-4 flex gap-1">
-        {windows.map((d) => (
-          <Link
-            key={d}
-            href={`/admin/reports?days=${d}`}
-            className={`rounded-md px-2.5 py-1.5 text-xs font-medium ${
-              window === d ? "bg-brand-600 text-white" : "text-ink-soft hover:bg-surface-sunken"
-            }`}
-          >
-            {d} days
-          </Link>
-        ))}
-      </div>
+      <Card className="mb-4 p-4">
+        <div className="flex flex-wrap gap-1.5">
+          {RANGE_PRESETS.map((p) => (
+            <Link
+              key={p.key}
+              href={presetHref(p.key)}
+              className={`rounded-md px-2.5 py-1.5 text-xs font-medium ${
+                range.key === p.key ? "bg-brand-600 text-white" : "bg-surface-sunken text-ink-soft hover:bg-line"
+              }`}
+            >
+              {p.label}
+            </Link>
+          ))}
+        </div>
+
+        {/* A plain GET form: works without JavaScript, and the phone's own
+            date picker opens for From and To. */}
+        <form method="get" className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr_1.4fr_auto] sm:items-end">
+          <label className="block">
+            <span className="mb-1 block text-xs font-medium text-ink-muted">From date</span>
+            <input
+              type="date"
+              name="from"
+              defaultValue={range.from}
+              max={today}
+              required
+              className="h-10 w-full rounded-lg border border-line-strong bg-surface px-3 text-sm text-ink focus:border-brand-600 focus:outline-none"
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-xs font-medium text-ink-muted">To date</span>
+            <input
+              type="date"
+              name="to"
+              defaultValue={range.to}
+              max={today}
+              required
+              className="h-10 w-full rounded-lg border border-line-strong bg-surface px-3 text-sm text-ink focus:border-brand-600 focus:outline-none"
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-xs font-medium text-ink-muted">Category</span>
+            <Select name="category" defaultValue={category?.slug ?? ""}>
+              <option value="">All categories</option>
+              {categories
+                .filter((c) => !c.parent_id)
+                .flatMap((top) => [
+                  <option key={top.id} value={top.slug}>
+                    {top.name}
+                  </option>,
+                  ...categories
+                    .filter((c) => c.parent_id === top.id)
+                    .map((c) => (
+                      <option key={c.id} value={c.slug}>
+                        {"— "}
+                        {c.name}
+                      </option>
+                    )),
+                ])}
+            </Select>
+          </label>
+          <Button type="submit">Show</Button>
+        </form>
+      </Card>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {tiles.map((t) => (
@@ -199,7 +315,7 @@ export default async function AdminReportsPage({
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
         <Card className="p-5 lg:col-span-2">
           <h2 className="text-sm font-semibold text-ink">Product performance</h2>
-          <p className="text-xs text-ink-muted">Top 20 by revenue in this window.</p>
+          <p className="text-xs text-ink-muted">Top 20 by revenue in this window{category ? ` · ${category.name}` : ""}.</p>
 
           <div className="mt-3 overflow-x-auto">
             <table className="w-full min-w-150 text-sm">
@@ -253,6 +369,9 @@ export default async function AdminReportsPage({
 
         <Card className="p-5">
           <h2 className="text-sm font-semibold text-ink">Payment mix</h2>
+          {category ? (
+            <p className="mt-1 text-xs text-ink-muted">All orders in this window — payment is per order, not per category.</p>
+          ) : null}
           {byMethod.size === 0 ? (
             <p className="mt-3 text-sm text-ink-muted">No orders in this window.</p>
           ) : (

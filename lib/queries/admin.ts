@@ -5,6 +5,13 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireStaff, requireAdmin, requirePermission } from "@/lib/auth/session";
 import type { AppRole, Order, OrderStatus } from "@/types/database";
 import { MANUAL_KEY_PREFIX } from "@/lib/payments/manual";
+import {
+  resolveRange,
+  bucketKeys,
+  bucketLabel,
+  dhakaDate,
+  type ReportRange,
+} from "@/lib/utils/report-range";
 
 /**
  * Admin reads.
@@ -164,43 +171,73 @@ export const getMonthlyMargin = cache(async (): Promise<MonthlyMargin> => {
   return { grossMarginPaisa, truncated: lines.length >= MARGIN_LINE_CAP, excludedLines };
 });
 
-/** Daily revenue for the dashboard chart. Bounded by design — 30 points max. */
+/** Daily revenue for the dashboard chart: the last `days` days. */
 export async function getRevenueSeries(days = 30) {
+  return getRevenueSeriesRange(resolveRange({ days: String(days) }));
+}
+
+/**
+ * Revenue per day (or per month, for long ranges) across a report window, in
+ * Dhaka dates. With `productIds` it counts only those products' line totals —
+ * the category filter on admin → Reports — and "orders" becomes the number of
+ * orders that contained them.
+ */
+export async function getRevenueSeriesRange(range: ReportRange, productIds?: string[] | null) {
   await requireStaff();
   const db = createAdminClient();
+  const keyOf = (ts: string) => {
+    const d = dhakaDate(ts);
+    return range.bucket === "day" ? d : d.slice(0, 7);
+  };
 
-  const from = new Date();
-  from.setDate(from.getDate() - days);
-  from.setHours(0, 0, 0, 0);
-
-  const { data } = await db
-    .from("orders")
-    .select("placed_at, total_paisa")
-    .gte("placed_at", from.toISOString())
-    .not("status", "in", "(cancelled,returned)")
-    .order("placed_at");
-
-  const byDay = new Map<string, { revenue: number; orders: number }>();
-  for (let i = 0; i <= days; i++) {
-    const d = new Date(from);
-    d.setDate(d.getDate() + i);
-    byDay.set(d.toISOString().slice(0, 10), { revenue: 0, orders: 0 });
+  const buckets = new Map<string, { revenue: number; orders: Set<string> | number }>();
+  for (const k of bucketKeys(range)) {
+    buckets.set(k, { revenue: 0, orders: productIds ? new Set<string>() : 0 });
   }
 
-  for (const row of data ?? []) {
-    const key = String(row.placed_at).slice(0, 10);
-    const entry = byDay.get(key);
-    if (entry) {
+  if (productIds) {
+    if (productIds.length > 0) {
+      const { data } = await db
+        .from("order_items")
+        .select("order_id, line_total_paisa, orders!inner(placed_at, status)")
+        .in("product_id", productIds)
+        .gte("orders.placed_at", range.fromIso)
+        .lt("orders.placed_at", range.toIsoExclusive)
+        .not("orders.status", "in", "(cancelled,returned)")
+        .limit(20000);
+      for (const row of (data ?? []) as unknown as {
+        order_id: string;
+        line_total_paisa: number;
+        orders: { placed_at: string };
+      }[]) {
+        const entry = buckets.get(keyOf(row.orders.placed_at));
+        if (!entry) continue;
+        entry.revenue += row.line_total_paisa ?? 0;
+        (entry.orders as Set<string>).add(row.order_id);
+      }
+    }
+  } else {
+    const { data } = await db
+      .from("orders")
+      .select("placed_at, total_paisa")
+      .gte("placed_at", range.fromIso)
+      .lt("placed_at", range.toIsoExclusive)
+      .not("status", "in", "(cancelled,returned)")
+      .order("placed_at")
+      .limit(10000);
+    for (const row of data ?? []) {
+      const entry = buckets.get(keyOf(String(row.placed_at)));
+      if (!entry) continue;
       entry.revenue += row.total_paisa ?? 0;
-      entry.orders += 1;
+      entry.orders = (entry.orders as number) + 1;
     }
   }
 
-  return [...byDay.entries()].map(([date, v]) => ({
-    date,
-    label: new Date(date).toLocaleDateString("en-GB", { day: "numeric", month: "short" }),
+  return [...buckets.entries()].map(([key, v]) => ({
+    date: key,
+    label: bucketLabel(key, range.bucket),
     revenue: v.revenue / 100,
-    orders: v.orders,
+    orders: typeof v.orders === "number" ? v.orders : v.orders.size,
   }));
 }
 

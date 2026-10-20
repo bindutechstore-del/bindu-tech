@@ -43,6 +43,7 @@ export default async function EditContentPage({ params }: { params: Promise<{ sl
             subtitle: builtIn.intro ?? "",
             description: builtIn.description,
             bannerColor: "",
+            boxed: false,
             blocks: blocksFromPage(builtIn),
           }
         }
