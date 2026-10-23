@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import {
   Sora,
   Plus_Jakarta_Sans,
-  Hind_Siliguri,
+  Noto_Sans_Bengali,
   Inter,
   Outfit,
   Space_Grotesk,
@@ -24,11 +24,12 @@ import { SITE_KEYWORDS } from "@/lib/seo";
  * Jakarta Sans carries body and UI: humanist enough to stay readable at 11px
  * in a spec table, warmer than Inter at large sizes.
  *
- * Hind Siliguri is the Bengali face, and it is not optional. The Latin faces
- * have no Bengali glyphs, so a promo tile written in Bangla would fall back to
- * whatever the device happens to have — often nothing, which renders as tofu
- * boxes. It is designed for Devanagari-family UI rather than adapted from a
- * print face, so it holds up next to Jakarta at small sizes.
+ * Noto Sans Bengali is the Bengali face, and it is not optional. The Latin
+ * faces have no Bengali glyphs, so a promo tile written in Bangla would fall
+ * back to whatever the device happens to have — often nothing, which renders
+ * as tofu boxes. It replaced Hind Siliguri, whose thin strokes and unusual
+ * digit "১" the shop owner found hard to read; Noto is the face Android
+ * itself uses for Bangla, clear at small sizes and with real bold.
  *
  * All three are self-hosted and subset by next/font, so this costs no
  * render-blocking request to Google and no layout shift.
@@ -90,19 +91,18 @@ const manrope = Manrope({
  *
  * None of the Latin faces carry Bengali glyphs, so a promo tile written in
  * Bangla would fall back to whatever the device happens to have — often
- * nothing, which renders as tofu boxes. Hind Siliguri sits at the end of every
+ * nothing, which renders as tofu boxes. Noto Sans Bengali sits at the end of every
  * stack below and the browser reaches it only for codepoints the chosen Latin
  * face cannot draw.
  */
-const bengali = Hind_Siliguri({
+const bengali = Noto_Sans_Bengali({
   subsets: ["bengali"],
-  weight: ["400", "500", "600", "700"],
+  // Variable font: one file covers every weight, so bold Bangla is real bold.
   variable: "--font-bengali",
   display: "swap",
-  // Not preloaded: four files (~130 KB) that most pages never use. The
-  // unicode-range in its @font-face means the browser fetches it the moment
-  // Bengali text is on screen, and never otherwise — preloading it made every
-  // page download it first and pushed the hero image back by ~0.7 s on 4G.
+  // Not preloaded: it is fetched the moment Bengali text is on screen (the
+  // @font-face unicode-range limits it to Bengali codepoints) and never on a
+  // page without any, so English-only pages do not pay for it.
   preload: false,
 });
 
@@ -182,7 +182,7 @@ export default async function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const theme = await getSiteTheme();
 
-  const bodyStack = `${FONT_VARS[theme.bodyFont]}, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, var(--font-bengali), "Hind Siliguri", sans-serif`;
+  const bodyStack = `${FONT_VARS[theme.bodyFont]}, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, var(--font-bengali), "Noto Sans Bengali", sans-serif`;
   const headingStack = `${FONT_VARS[theme.headingFont]}, ${bodyStack}`;
 
   return (

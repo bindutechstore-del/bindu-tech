@@ -62,13 +62,13 @@
    */
   --font-sans: var(--font-latin), "Plus Jakarta Sans", ui-sans-serif, system-ui,
     -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
-    var(--font-bengali), "Hind Siliguri", sans-serif;
+    var(--font-bengali), "Noto Sans Bengali", sans-serif;
 
   /* Headings, prices and anything meant to carry weight. Same Bengali
      fallback, so a Bangla headline never drops to tofu. */
   --font-heading: var(--font-display), "Sora", var(--font-latin),
     "Plus Jakarta Sans", ui-sans-serif, system-ui,
-    var(--font-bengali), "Hind Siliguri", sans-serif;
+    var(--font-bengali), "Noto Sans Bengali", sans-serif;
 
   --radius-card: 0.75rem;
 
