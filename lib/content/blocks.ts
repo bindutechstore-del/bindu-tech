@@ -20,11 +20,47 @@ export const TONE_INFO: Record<Tone, { label: string; hint: string }> = {
   success: { label: "Green good news", hint: "Promises and guarantees" },
 };
 
+/** Icons a Title or Subtitle can carry — a fixed set, labelled for the editor. */
+export const TITLE_ICONS = {
+  shield: "Warranty / ওয়ারেন্টি",
+  truck: "Delivery / ডেলিভারি",
+  return: "Return / রিটার্ন",
+  card: "Payment / পেমেন্ট",
+  wallet: "bKash, Nagad / ওয়ালেট",
+  money: "Cash / টাকা",
+  phone: "Phone / ফোন",
+  mail: "Email / ইমেইল",
+  location: "Address / ঠিকানা",
+  clock: "Time / সময়",
+  info: "Info / তথ্য",
+  warning: "Warning / সতর্কতা",
+  check: "Done / সঠিক",
+  package: "Product / প্রোডাক্ট",
+  video: "Video / ভিডিও",
+  gift: "Offer / অফার",
+  star: "Special / বিশেষ",
+  lock: "Privacy / গোপনীয়তা",
+  help: "Question / প্রশ্ন",
+  file: "Rules / নিয়ম",
+  support: "Support / সাপোর্ট",
+} as const;
+export type TitleIcon = keyof typeof TITLE_ICONS;
+
+/** A Title's colour: the shop's brand colour or one of the text colours. */
+export type TitleColor = "brand" | TextColor;
+
+interface TitleStyle {
+  /** Centred instead of left-aligned. */
+  align?: "center";
+  color?: TitleColor;
+  icon?: TitleIcon;
+}
+
 export type Block =
   /** "Title" in the editor: a section heading, underlined. */
-  | { type: "heading"; text: string }
+  | ({ type: "heading"; text: string } & TitleStyle)
   /** "Subtitle" in the editor: a smaller heading inside a section. */
-  | { type: "subheading"; text: string }
+  | ({ type: "subheading"; text: string } & TitleStyle)
   | { type: "paragraph"; text: string }
   | { type: "list"; items: string[] }
   | { type: "callout"; tone: Tone; title: string; text: string }
@@ -54,9 +90,25 @@ export function sanitiseBlocks(raw: unknown): Block[] {
     const v = b as Record<string, unknown>;
     switch (v.type) {
       case "heading":
-      case "subheading":
-        if (clip(v.text, 200).trim()) out.push({ type: v.type, text: clip(v.text, 200).trim() });
+      case "subheading": {
+        const text = clip(v.text, 200).trim();
+        if (!text) break;
+        // hasOwn, not `in`: "toString" is "in" every object.
+        const color =
+          v.color === "brand" || (typeof v.color === "string" && Object.hasOwn(TEXT_COLORS, v.color))
+            ? (v.color as TitleColor)
+            : undefined;
+        const icon =
+          typeof v.icon === "string" && Object.hasOwn(TITLE_ICONS, v.icon) ? (v.icon as TitleIcon) : undefined;
+        out.push({
+          type: v.type,
+          text,
+          ...(v.align === "center" ? { align: "center" as const } : {}),
+          ...(color ? { color } : {}),
+          ...(icon ? { icon } : {}),
+        });
         break;
+      }
       case "paragraph":
         if (clip(v.text).trim()) out.push({ type: "paragraph", text: clip(v.text).trim() });
         break;

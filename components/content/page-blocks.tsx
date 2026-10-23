@@ -1,5 +1,107 @@
-import { AlertTriangle, CircleCheck, Info, ShieldCheck, Check, type LucideIcon } from "lucide-react";
-import { inlineRuns, TEXT_COLORS, type Block, type Tone } from "@/lib/content/blocks";
+import type { ReactNode } from "react";
+import {
+  AlertTriangle,
+  Banknote,
+  Check,
+  CircleCheck,
+  CircleHelp,
+  Clock,
+  CreditCard,
+  FileText,
+  Gift,
+  Headphones,
+  Info,
+  Lock,
+  Mail,
+  MapPin,
+  Package,
+  Phone,
+  RotateCcw,
+  ShieldCheck,
+  Star,
+  Truck,
+  Video,
+  Wallet,
+  type LucideIcon,
+} from "lucide-react";
+import {
+  inlineRuns,
+  TEXT_COLORS,
+  type Block,
+  type Tone,
+  type TitleColor,
+  type TitleIcon,
+} from "@/lib/content/blocks";
+
+const TITLE_ICON: Record<TitleIcon, LucideIcon> = {
+  shield: ShieldCheck,
+  truck: Truck,
+  return: RotateCcw,
+  card: CreditCard,
+  wallet: Wallet,
+  money: Banknote,
+  phone: Phone,
+  mail: Mail,
+  location: MapPin,
+  clock: Clock,
+  info: Info,
+  warning: AlertTriangle,
+  check: CircleCheck,
+  package: Package,
+  video: Video,
+  gift: Gift,
+  star: Star,
+  lock: Lock,
+  help: CircleHelp,
+  file: FileText,
+  support: Headphones,
+};
+
+/** The CSS colour for a Title colour choice; "brand" follows the shop's theme. */
+export function titleColor(c: TitleColor): string {
+  return c === "brand" ? "var(--color-brand-700)" : TEXT_COLORS[c];
+}
+
+/**
+ * Emails, Bangladeshi phone numbers and web addresses become links, so a
+ * shopper can tap "Call: 09658526519" or an email straight from a policy page.
+ * Phones: 01XXXXXXXXX mobiles and 09XXXXXXXXX hotlines, with or without 880.
+ */
+const LINK =
+  /([\w.+-]+@[\w-]+(?:\.[\w-]+)+)|(https?:\/\/[^\s<]+[^\s<.,;:!?)\]'"])|(www\.[^\s<]+[^\s<.,;:!?)\]'"])|((?<![\d+])(?:\+?880|0)(?:1[3-9]\d{8}|9\d{9})(?!\d))/g;
+
+function linkify(text: string, linkClass: string): ReactNode[] {
+  const out: ReactNode[] = [];
+  let last = 0;
+  for (const m of text.matchAll(LINK)) {
+    const at = m.index ?? 0;
+    if (at > last) out.push(text.slice(last, at));
+    const [whole, email, url, www, phone] = m;
+    let href = "";
+    if (email) href = `mailto:${email}`;
+    else if (url) href = url;
+    else if (www) href = `https://${www}`;
+    else if (phone) {
+      const digits = phone.replace(/\D/g, "");
+      href = `tel:${digits.startsWith("880") ? `+${digits}` : `+88${digits}`}`;
+    }
+    out.push(
+      <a
+        key={at}
+        href={href}
+        className={linkClass}
+        {...(url || www ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+      >
+        {whole}
+      </a>,
+    );
+    last = at + whole.length;
+  }
+  if (last < text.length) out.push(text.slice(last));
+  return out;
+}
+
+const LINK_CLASS = "font-medium text-brand-700 underline underline-offset-2 hover:text-brand-800";
 
 /**
  * Renders an information page: the optional coloured banner and its blocks.
@@ -41,8 +143,11 @@ const TONE_STYLE: Record<Tone, { box: string; title: string; icon: LucideIcon; i
   },
 };
 
-/** Text with **bold**, __underline__ and [red]colour[/red] runs; line breaks kept. */
-export function Rich({ text }: { text: string }) {
+/**
+ * Text with **bold**, __underline__ and [red]colour[/red] runs, and emails,
+ * phone numbers and web addresses as links; line breaks kept.
+ */
+export function Rich({ text, linkClass = LINK_CLASS }: { text: string; linkClass?: string }) {
   return (
     <>
       {inlineRuns(text).map((r, i) => {
@@ -50,14 +155,15 @@ export function Rich({ text }: { text: string }) {
           .filter(Boolean)
           .join(" ");
         const style = r.color ? { color: TEXT_COLORS[r.color] } : undefined;
-        if (!cls && !style) return <span key={i}>{r.text}</span>;
+        const content = linkify(r.text, linkClass);
+        if (!cls && !style) return <span key={i}>{content}</span>;
         return r.bold ? (
           <strong key={i} className={cls} style={style}>
-            {r.text}
+            {content}
           </strong>
         ) : (
           <span key={i} className={cls || undefined} style={style}>
-            {r.text}
+            {content}
           </span>
         );
       })}
@@ -95,7 +201,8 @@ export function PageBanner({
       <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{title}</h1>
       {subtitle ? (
         <p className="mx-auto mt-3 max-w-2xl whitespace-pre-line text-sm leading-7 text-white/90 sm:text-base">
-          <Rich text={subtitle} />
+          {/* Links keep the banner's white, underlined. */}
+          <Rich text={subtitle} linkClass="font-semibold underline underline-offset-2" />
         </p>
       ) : null}
     </div>
@@ -104,21 +211,43 @@ export function PageBanner({
 
 function renderBlock(b: Block, i: number) {
   switch (b.type) {
-    case "heading":
-      // "Title": underlined in the brand colour, as the client asked.
+    case "heading": {
+      // "Title": underlined (in its own colour, or the brand colour), with an
+      // optional icon, left or centred — all chosen in the editor.
+      const color = b.color ? titleColor(b.color) : undefined;
+      const Icon = b.icon ? TITLE_ICON[b.icon] : null;
       return (
-        <h2 key={i} className="pt-3 text-lg font-bold tracking-tight text-ink first:pt-0 sm:text-xl">
-          <span className="underline decoration-brand-600 decoration-[3px] underline-offset-[7px]">
+        <h2
+          key={i}
+          className={`pt-3 text-lg font-bold tracking-tight text-ink first:pt-0 sm:text-xl ${
+            b.align === "center" ? "text-center" : ""
+          }`}
+          style={color ? { color } : undefined}
+        >
+          {Icon ? <Icon size={22} aria-hidden className="mr-2 inline-block -translate-y-0.5 align-middle" /> : null}
+          <span
+            className="underline decoration-[3px] underline-offset-[7px]"
+            style={{ textDecorationColor: color ?? "var(--color-brand-600)" }}
+          >
             {b.text}
           </span>
         </h2>
       );
-    case "subheading":
+    }
+    case "subheading": {
+      const color = b.color ? titleColor(b.color) : undefined;
+      const Icon = b.icon ? TITLE_ICON[b.icon] : null;
       return (
-        <h3 key={i} className="pt-1 text-base font-semibold text-ink first:pt-0">
+        <h3
+          key={i}
+          className={`pt-1 text-base font-semibold text-ink first:pt-0 ${b.align === "center" ? "text-center" : ""}`}
+          style={color ? { color } : undefined}
+        >
+          {Icon ? <Icon size={18} aria-hidden className="mr-1.5 inline-block -translate-y-px align-middle" /> : null}
           {b.text}
         </h3>
       );
+    }
     case "paragraph":
       return (
         <p key={i} className="whitespace-pre-line text-[15px] leading-7 text-ink-soft">

@@ -2,7 +2,17 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { ArrowDown, ArrowUp, Bold, Plus, RotateCcw, Trash2, Underline } from "lucide-react";
+import {
+  AlignCenter,
+  AlignLeft,
+  ArrowDown,
+  ArrowUp,
+  Bold,
+  Plus,
+  RotateCcw,
+  Trash2,
+  Underline,
+} from "lucide-react";
 import { saveContentPage, resetContentPage } from "@/lib/actions/content-pages";
 import {
   TEXT_COLORS,
@@ -11,9 +21,13 @@ import {
   type Block,
   type PageContent,
   type Tone,
+  TITLE_ICONS,
+  type TitleColor,
+  type TitleIcon,
+  type TextColor,
 } from "@/lib/content/blocks";
 import { BRAND_PALETTE, contrastRatio } from "@/lib/theme/schema";
-import { PageBanner, PageBlocks } from "@/components/content/page-blocks";
+import { PageBanner, PageBlocks, titleColor } from "@/components/content/page-blocks";
 import { Card } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea, Select } from "@/components/ui/field";
@@ -251,13 +265,16 @@ export function PageEditor({
             </div>
 
             {b.type === "heading" || b.type === "subheading" ? (
-              <Input
-                value={b.text}
-                maxLength={200}
-                placeholder={b.type === "heading" ? "Section title" : "Subtitle"}
-                onChange={(e) => update(b._id, { text: e.target.value })}
-                className={b.type === "heading" ? "font-semibold" : undefined}
-              />
+              <div className="space-y-2">
+                <Input
+                  value={b.text}
+                  maxLength={200}
+                  placeholder={b.type === "heading" ? "Section title" : "Subtitle"}
+                  onChange={(e) => update(b._id, { text: e.target.value })}
+                  className={b.type === "heading" ? "font-semibold" : undefined}
+                />
+                <TitleControls block={b} onChange={(patch) => update(b._id, patch)} />
+              </div>
             ) : b.type === "paragraph" ? (
               <RichTextarea
                 value={b.text}
@@ -430,13 +447,75 @@ function RichTextarea({
   );
 }
 
+/**
+ * Under each Title / Subtitle: left or centred, a colour, and an icon — the
+ * shop owner asked for all three ("titles don't come to the middle", "can't
+ * add an icon", "need a colour option for titles").
+ */
+function TitleControls({
+  block,
+  onChange,
+}: {
+  block: Extract<Block, { type: "heading" | "subheading" }>;
+  onChange: (patch: Partial<Block>) => void;
+}) {
+  const colors: (TitleColor | undefined)[] = [
+    undefined,
+    "brand",
+    ...(Object.keys(TEXT_COLORS) as TextColor[]),
+  ];
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <div className="inline-flex rounded-lg border border-line p-0.5" role="group" aria-label="Alignment">
+        <ToolButton label="Align left" active={!block.align} onClick={() => onChange({ align: undefined })}>
+          <AlignLeft size={15} />
+        </ToolButton>
+        <ToolButton label="Centre" active={block.align === "center"} onClick={() => onChange({ align: "center" })}>
+          <AlignCenter size={15} />
+        </ToolButton>
+      </div>
+      <div className="flex items-center gap-1" role="group" aria-label="Title colour">
+        {colors.map((c) => (
+          <button
+            key={c ?? "default"}
+            type="button"
+            title={c ? `${c[0].toUpperCase()}${c.slice(1)}` : "Default (dark)"}
+            aria-label={`Title colour: ${c ?? "default"}`}
+            aria-pressed={block.color === c}
+            onClick={() => onChange({ color: c })}
+            className={`size-6 rounded-full border-2 ${
+              block.color === c ? "border-ink ring-2 ring-brand-600/30" : "border-white shadow-[0_0_0_1px_rgba(0,0,0,0.15)]"
+            }`}
+            style={{ background: c ? titleColor(c) : "#14161a" }}
+          />
+        ))}
+      </div>
+      <Select
+        value={block.icon ?? ""}
+        onChange={(e) => onChange({ icon: (e.target.value || undefined) as TitleIcon | undefined })}
+        aria-label="Title icon"
+        className="h-8 w-auto min-w-36 text-xs"
+      >
+        <option value="">No icon</option>
+        {(Object.entries(TITLE_ICONS) as [TitleIcon, string][]).map(([k, label]) => (
+          <option key={k} value={k}>
+            {label}
+          </option>
+        ))}
+      </Select>
+    </div>
+  );
+}
+
 function ToolButton({
   label,
   onClick,
+  active = false,
   children,
 }: {
   label: string;
   onClick: () => void;
+  active?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -444,10 +523,13 @@ function ToolButton({
       type="button"
       title={label}
       aria-label={label}
+      aria-pressed={active || undefined}
       // Keep the textarea's selection while the button is pressed.
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
-      className="inline-flex size-8 items-center justify-center rounded-md text-ink-soft hover:bg-surface hover:text-ink"
+      className={`inline-flex size-8 items-center justify-center rounded-md hover:bg-surface hover:text-ink ${
+        active ? "bg-brand-50 text-brand-700" : "text-ink-soft"
+      }`}
     >
       {children}
     </button>
