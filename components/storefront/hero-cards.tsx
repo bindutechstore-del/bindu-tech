@@ -119,23 +119,18 @@ function CampaignCard({
       ) : null}
 
       {/*
-        Four passes, each doing one job:
-          1. an accent wash that ties mismatched photographs into one set;
-          2. a TOP scrim, because the Bangla headline is white and half these
-             photographs are pale products on pale backgrounds — a drop shadow
-             alone does not survive a white keyboard;
-          3. a deep bottom scrim carrying the caption block;
-          4. a hairline inset so the card reads as an object rather than a hole
-             punched in the page.
+        Shading kept to what the text needs, so the artwork shows at its own
+        brightness — the shop's banners carry their own Bangla headlines, and
+        the old full-card tint and two heavy scrims made them look dim:
+          1. a TOP scrim only when a headline is laid over the picture;
+          2. a short bottom scrim under the caption block.
       */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: `linear-gradient(170deg, ${accent}6b 0%, ${accent}1f 42%, transparent 64%)`,
-        }}
-      />
-      <div className="absolute inset-x-0 top-0 h-[42%] bg-gradient-to-b from-ink/70 via-ink/25 to-transparent" />
-      <div className="absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-t from-ink via-ink/78 to-transparent" />
+      {b.eyebrow ? (
+        <div className="absolute inset-x-0 top-0 h-[34%] bg-gradient-to-b from-black/55 via-black/15 to-transparent" />
+      ) : null}
+      <div className="absolute inset-x-0 bottom-0 h-[40%] bg-gradient-to-t from-black/75 via-black/30 to-transparent" />
+      {/* The banner's accent colour (admin → Banners), as a strip along the bottom edge. */}
+      <div className="absolute inset-x-0 bottom-0 h-1" style={{ background: accent }} />
       <div className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-inset ring-white/10" />
 
       {/* Bangla headline, burned over the artwork like the print campaigns. */}
@@ -153,12 +148,12 @@ function CampaignCard({
       ) : null}
 
       <div className="absolute inset-x-0 bottom-0 p-3.5 sm:p-4">
-        <h2 className="text-base font-bold leading-tight tracking-tight text-white sm:text-lg lg:text-xl">
+        <h2 className="text-base font-bold leading-tight tracking-tight text-white drop-shadow-[0_1px_6px_rgba(0,0,0,0.6)] sm:text-lg lg:text-xl">
           {b.title}
         </h2>
 
         {b.subtitle ? (
-          <p className="mt-1 line-clamp-1 text-[11px] text-white/70 sm:text-xs lg:text-[13px]">
+          <p className="mt-1 line-clamp-1 text-[11px] text-white/85 drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)] sm:text-xs lg:text-[13px]">
             {b.subtitle}
           </p>
         ) : null}
