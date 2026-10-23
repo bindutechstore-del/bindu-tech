@@ -133,6 +133,8 @@ export interface Product {
   is_featured: boolean;
   is_new_arrival: boolean;
   is_best_seller: boolean;
+  /** Sold in sizes / options; one must be chosen (0034, kept by trigger). */
+  has_variants: boolean;
   thumbnail_url: string | null;
   video_url: string | null;
   rating_sum: number;

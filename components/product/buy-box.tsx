@@ -32,9 +32,13 @@ export function BuyBox({
   lowStockThreshold: number;
   signedIn: boolean;
 }) {
+  // With several sizes the shopper picks one themselves — a pre-selected "S"
+  // is how wrong sizes get ordered. A single option is simply chosen.
   const [variantId, setVariantId] = useState<string | null>(
-    variants.find((v) => v.stock > 0)?.id ?? variants[0]?.id ?? null,
+    variants.length === 1 && variants[0].stock > 0 ? variants[0].id : null,
   );
+  // "Size" when every option is a size, otherwise the generic word.
+  const optionWord = variants.length > 0 && variants.every((v) => v.attributes?.size) ? "size" : "option";
   const [qty, setQty] = useState(1);
   const [wishlisted, setWishlisted] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -52,6 +56,7 @@ export function BuyBox({
   const stock = variant ? variant.stock : product.stock;
   const off = discountPercent(price, compareAt);
   const inStock = stock > 0;
+  const needsChoice = variants.length > 0 && !variant;
   const maxQty = Math.min(stock, 99);
 
   function buyNow() {
@@ -131,7 +136,10 @@ export function BuyBox({
       {variants.length > 0 ? (
         <fieldset className="mt-5">
           <legend className="text-sm font-medium text-ink-soft">
-            Choose an option
+            {optionWord === "size" ? "Size" : "Choose an option"}
+            {needsChoice ? (
+              <span className="ml-2 text-xs font-normal text-warning">Choose a {optionWord}</span>
+            ) : null}
           </legend>
           <div className="mt-2 flex flex-wrap gap-2">
             {variants.map((v) => {
@@ -191,14 +199,15 @@ export function BuyBox({
           productId={product.id}
           variantId={variantId}
           quantity={qty}
-          disabled={!inStock}
+          disabled={!inStock || needsChoice}
+          disabledLabel={needsChoice && inStock ? `Choose a ${optionWord}` : undefined}
           size="lg"
           variant="outline"
           block
         />
         <Button
           onClick={buyNow}
-          disabled={!inStock}
+          disabled={!inStock || needsChoice}
           loading={buying}
           size="lg"
           block

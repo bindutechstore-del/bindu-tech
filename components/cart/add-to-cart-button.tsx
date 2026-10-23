@@ -23,6 +23,7 @@ export function AddToCartButton({
   quantity = 1,
   disabled,
   label = "Add to cart",
+  disabledLabel = "Out of stock",
   size = "md",
   variant = "primary",
   block,
@@ -32,6 +33,8 @@ export function AddToCartButton({
   quantity?: number;
   disabled?: boolean;
   label?: string;
+  /** What a disabled button says — "Out of stock" unless told otherwise. */
+  disabledLabel?: string;
   size?: ButtonProps["size"];
   variant?: ButtonProps["variant"];
   block?: boolean;
@@ -72,10 +75,10 @@ export function AddToCartButton({
       size={size}
       variant={disabled ? "outline" : variant}
       block={block}
-      aria-label={disabled ? "Out of stock" : label}
+      aria-label={disabled ? disabledLabel : label}
     >
       {!loading ? added ? <Check /> : <ShoppingCart /> : null}
-      {disabled ? "Out of stock" : added ? "Added" : label}
+      {disabled ? disabledLabel : added ? "Added" : label}
     </Button>
   );
 }

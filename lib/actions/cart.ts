@@ -30,6 +30,7 @@ function friendlyError(message: string): string {
     return "That product is no longer available.";
   if (message.includes("variant_unavailable"))
     return "That option is no longer available.";
+  if (message.includes("variant_required")) return "Please choose a size or option first.";
   if (message.includes("cart_forbidden")) return "Your cart session expired.";
   if (message.includes("cart_not_found")) return "Your cart session expired.";
   if (message.includes("cart_item_not_found")) return "That item is no longer in your cart.";

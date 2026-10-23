@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ImageOff } from "lucide-react";
+import { ImageOff, Ruler } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Badge, Rating } from "@/components/ui/primitives";
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { BuyNowButton } from "@/components/cart/buy-now-button";
@@ -116,22 +117,33 @@ export function ProductCard({
           about 170px wide, and "Add to cart" alone does not fit next to
           anything without truncating.
         */}
-        <div className="space-y-1.5">
-          <AddToCartButton
-            productId={product.id}
-            disabled={outOfStock}
-            size="sm"
-            block
-            label="Add to cart"
-          />
-          <BuyNowButton
-            productId={product.id}
-            disabled={outOfStock}
-            size="sm"
-            variant="outline"
-            block
-          />
-        </div>
+        {/* Sold in sizes or options: the choice happens on the product page,
+            so the card links there instead of adding a size-less line. */}
+        {product.has_variants && !outOfStock ? (
+          <Button asChild size="sm" block>
+            <Link href={`/products/${product.slug}`}>
+              <Ruler />
+              Choose size
+            </Link>
+          </Button>
+        ) : (
+          <div className="space-y-1.5">
+            <AddToCartButton
+              productId={product.id}
+              disabled={outOfStock}
+              size="sm"
+              block
+              label="Add to cart"
+            />
+            <BuyNowButton
+              productId={product.id}
+              disabled={outOfStock}
+              size="sm"
+              variant="outline"
+              block
+            />
+          </div>
+        )}
       </div>
     </article>
   );
