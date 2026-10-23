@@ -7,7 +7,7 @@ import { ProductForm } from "@/components/admin/product-form";
 import { DeleteProductButton } from "@/components/admin/delete-product-button";
 import { PageHeader } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
-import type { Brand, Category, ProductAdmin } from "@/types/database";
+import type { Brand, Category, ProductAdmin, ProductVariant } from "@/types/database";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +22,7 @@ export default async function EditProductPage({
 
   // Service role, so `cost_paisa` comes back — it is revoked for both client
   // roles at the column level in migration 0011.
-  const [{ data: product }, { data: categories }, { data: brands }, { data: gallery }] =
+  const [{ data: product }, { data: categories }, { data: brands }, { data: gallery }, { data: variants }] =
     await Promise.all([
       db.from("products").select("*").eq("id", id).maybeSingle(),
       db.from("categories").select("*").order("position"),
@@ -30,6 +30,8 @@ export default async function EditProductPage({
       // Without these the form would open with only the main picture, and the
       // next save would quietly delete the rest of the gallery.
       db.from("product_images").select("url").eq("product_id", id).order("position"),
+      // Likewise its sizes: the form's editor replaces them on save.
+      db.from("product_variants").select("*").eq("product_id", id).order("position"),
     ]);
 
   if (!product) notFound();
@@ -68,6 +70,7 @@ export default async function EditProductPage({
         images={((gallery ?? []) as { url: string }[]).map((g) => g.url)}
         categories={(categories ?? []) as Category[]}
         brands={(brands ?? []) as Brand[]}
+        variants={(variants ?? []) as ProductVariant[]}
       />
     </>
   );

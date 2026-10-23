@@ -11,7 +11,7 @@ export default async function AdminStockPage() {
 
   const { data } = await db
     .from("products")
-    .select("id, name, sku, stock, low_stock_threshold, status, thumbnail_url")
+    .select("id, name, sku, stock, low_stock_threshold, status, thumbnail_url, has_variants")
     .neq("status", "archived")
     .order("stock", { ascending: true })
     .limit(300);
@@ -24,6 +24,7 @@ export default async function AdminStockPage() {
     low_stock_threshold: number;
     status: string;
     thumbnail_url: string | null;
+    has_variants: boolean;
   }[];
 
   const out = rows.filter((r) => r.stock === 0).length;

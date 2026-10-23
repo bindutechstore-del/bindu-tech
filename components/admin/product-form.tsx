@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useActionState, useEffect } from "react";
+import { startTransition, useActionState, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { saveProduct, type AdminState } from "@/lib/actions/admin";
@@ -8,9 +8,10 @@ import { paisaToTaka } from "@/lib/utils/money";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea, Select, Field } from "@/components/ui/field";
 import { Card } from "@/components/ui/primitives";
-import type { Brand, Category, ProductAdmin, SpecItem } from "@/types/database";
+import type { Brand, Category, ProductAdmin, ProductVariant, SpecItem } from "@/types/database";
 import { ImageUploader } from "./image-uploader";
 import { BrandPicker } from "./brand-picker";
+import { VariantEditor } from "./variant-editor";
 
 const initial: AdminState = { ok: false };
 
@@ -27,15 +28,31 @@ export function ProductForm({
   categories,
   brands,
   images = [],
+  variants = [],
 }: {
   product: ProductAdmin | null;
   categories: Category[];
   brands: Brand[];
   /** Gallery URLs in display order, for an existing product. */
   images?: string[];
+  /** Its sizes / options, for an existing product. */
+  variants?: ProductVariant[];
 }) {
   const [state, action, pending] = useActionState(saveProduct, initial);
   const router = useRouter();
+  const [categoryId, setCategoryId] = useState(product?.category_id ?? "");
+  // Total stock of the sizes, or null when the product has none.
+  const [sizesTotal, setSizesTotal] = useState<number | null>(null);
+
+  // Fashion = the "fashion" category or anything under it. Fashion products
+  // open the sizes editor straight away.
+  const isFashion = useMemo(() => {
+    const byId = new Map(categories.map((c) => [c.id, c]));
+    for (let c = byId.get(categoryId); c; c = c.parent_id ? byId.get(c.parent_id) : undefined) {
+      if (c.slug === "fashion" || /fashion/i.test(c.name)) return true;
+    }
+    return false;
+  }, [categories, categoryId]);
 
   useEffect(() => {
     if (state.ok && state.message) {
@@ -115,6 +132,7 @@ export function ProductForm({
                 id="category_id"
                 name="category_id"
                 defaultValue={product?.category_id ?? ""}
+                onChange={(e) => setCategoryId(e.target.value)}
               >
                 <option value="">Uncategorised</option>
                 {categories
@@ -213,16 +231,23 @@ export function ProductForm({
               />
             </Field>
 
-            <Field label="Stock" htmlFor="stock" required>
-              <Input
-                id="stock"
-                name="stock"
-                type="number"
-                min="0"
-                required
-                defaultValue={product?.stock ?? 0}
-              />
-            </Field>
+            {sizesTotal !== null ? (
+              // With sizes, stock is the sum of the sizes (kept by a trigger).
+              <Field label="Stock" htmlFor="stock" hint="Total of all sizes — edit them below">
+                <Input id="stock" name="stock" type="number" value={sizesTotal} readOnly className="bg-surface-sunken" />
+              </Field>
+            ) : (
+              <Field label="Stock" htmlFor="stock" required>
+                <Input
+                  id="stock"
+                  name="stock"
+                  type="number"
+                  min="0"
+                  required
+                  defaultValue={product?.stock ?? 0}
+                />
+              </Field>
+            )}
 
             <Field label="Low-stock alert at" htmlFor="low_stock_threshold">
               <Input
@@ -249,6 +274,8 @@ export function ProductForm({
             </Field>
           </div>
         </Card>
+
+        <VariantEditor initial={variants} isFashion={isFashion} onTotalChange={setSizesTotal} />
 
         <Card className="p-5">
           <h2 className="text-sm font-semibold text-ink">Details</h2>

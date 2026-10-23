@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireStaff, requireAdmin, requirePermission } from "@/lib/auth/session";
 import { takaToPaisa } from "@/lib/utils/money";
+import { parseVariantRows, syncProductVariants } from "@/lib/catalog/variants";
 import { isManualSubmission } from "@/lib/payments/manual";
 import {
   HIGHLIGHT_BODY_MAX,
@@ -177,6 +178,14 @@ export async function saveProduct(
   const d = parsed.data;
   const id = String(formData.get("id") ?? "");
 
+  // Sizes / options, checked before anything is written so a bad row cannot
+  // leave the product half-saved. Only when the editor was on the form.
+  const sizesOnForm = formData.has("variants__on");
+  const sizes = sizesOnForm ? parseVariantRows(formData.get("variants_json")) : null;
+  if (sizes && "error" in sizes) {
+    return { ok: false, error: sizes.error };
+  }
+
   // Https only: these land in <img src> on the storefront, and a javascript:
   // or http: URL has no business there. Capped at the uploader's limit.
   //
@@ -289,6 +298,19 @@ export async function saveProduct(
           error: `Product saved, but its pictures were not: ${imgError.message}`,
         };
       }
+    }
+  }
+
+  if (sizes && "rows" in sizes) {
+    const problem = await syncProductVariants(
+      db,
+      (saved as { id: string }).id,
+      d.sku,
+      sizes.rows,
+      d.stock,
+    );
+    if (problem) {
+      return { ok: false, error: `Product saved, but its sizes were not: ${problem}` };
     }
   }
 
@@ -441,6 +463,11 @@ export async function adjustStock(id: string, stock: number): Promise<AdminState
   }
 
   const db = createAdminClient();
+  // A product sold in sizes keeps stock per size; its total is derived.
+  const { data: current } = await db.from("products").select("has_variants").eq("id", id).maybeSingle();
+  if ((current as { has_variants?: boolean } | null)?.has_variants) {
+    return { ok: false, error: "This product's stock is kept per size — change it in the product's Sizes section." };
+  }
   const { error } = await db.from("products").update({ stock }).eq("id", id);
   if (error) return { ok: false, error: "Could not update stock." };
 

@@ -17,6 +17,8 @@ interface Row {
   low_stock_threshold: number;
   status: string;
   thumbnail_url: string | null;
+  /** Stock is kept per size; the figure here is their total. */
+  has_variants: boolean;
 }
 
 /**
@@ -113,6 +115,16 @@ export function StockTable({ rows }: { rows: Row[] }) {
                   {saved === r.id ? (
                     <Check size={15} className="text-success" aria-label="Saved" />
                   ) : null}
+                  {r.has_variants ? (
+                    // Sold in sizes: the total follows the sizes, so it is
+                    // changed there, not overwritten here.
+                    <span className="flex items-center gap-2 text-sm">
+                      <span className="tabular font-medium text-ink">{r.stock}</span>
+                      <Link href={`/admin/products/${r.id}`} className="text-xs font-medium text-brand-600 hover:text-brand-700">
+                        Edit sizes
+                      </Link>
+                    </span>
+                  ) : (
                   <Input
                     type="number"
                     min="0"
@@ -131,6 +143,7 @@ export function StockTable({ rows }: { rows: Row[] }) {
                     className="h-8 w-20 text-right text-sm tabular"
                     aria-label={`Stock for ${r.name}`}
                   />
+                  )}
                 </div>
               </td>
             </tr>
