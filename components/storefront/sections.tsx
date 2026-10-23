@@ -20,6 +20,7 @@ import { Rating } from "@/components/ui/primitives";
 import type { ProductCard as ProductCardData } from "@/lib/queries/catalog";
 import type { Banner, Category } from "@/types/database";
 import type { HighlightIcon, HomeHighlight } from "@/lib/content/highlights";
+import { AutoScrollRail } from "./auto-scroll-rail";
 
 /** Section shell: heading, optional "see all", and the content. */
 export function Section({
@@ -100,21 +101,12 @@ export function CategoryGrid({
 }: {
   categories: Category[];
   /**
-   * Homepage: two rows that swipe sideways together to reach every other
-   * category — columns of two tiles flowing left to right — with "See all"
-   * for the full page.
+   * Homepage: a single row that scrolls sideways by itself (and by swipe) to
+   * reach every category, with "See all" for the full page.
    */
   oneRow?: boolean;
 }) {
-  return (
-    <div
-      className={
-        oneRow
-          ? "rail -mx-4 grid scroll-px-4 auto-cols-[5.6rem] grid-flow-col grid-rows-2 gap-2 overflow-x-auto px-4 pb-1 sm:auto-cols-[8rem] sm:gap-3 lg:auto-cols-[9rem]"
-          : "grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6"
-      }
-    >
-      {categories.map((c) => {
+  const tiles = categories.map((c) => {
         const Icon =
           (c.icon && (Icons as unknown as Record<string, LucideIcon>)[c.icon]) ||
           Icons.Package;
@@ -126,7 +118,7 @@ export function CategoryGrid({
             className={`group flex flex-col items-center gap-2 rounded-xl border border-line bg-surface p-4 text-center transition-all hover:border-brand-200 hover:shadow-lift ${
               // Fixed widths so a sliver of the next tile shows at the edge —
               // the cue that the row swipes.
-              oneRow ? "max-sm:gap-1.5 max-sm:p-2" : ""
+              oneRow ? "w-[5.6rem] shrink-0 max-sm:gap-1.5 max-sm:p-2 sm:w-32 lg:w-36" : ""
             }`}
           >
             <span className="flex size-12 items-center justify-center rounded-full bg-brand-50 text-brand-600 transition-colors group-hover:bg-brand-600 group-hover:text-white">
@@ -147,8 +139,14 @@ export function CategoryGrid({
             </span>
           </Link>
         );
-      })}
-    </div>
+  });
+
+  return oneRow ? (
+    <AutoScrollRail className="rail -mx-4 flex scroll-px-4 gap-2 overflow-x-auto px-4 pb-1 sm:gap-3">
+      {tiles}
+    </AutoScrollRail>
+  ) : (
+    <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">{tiles}</div>
   );
 }
 
