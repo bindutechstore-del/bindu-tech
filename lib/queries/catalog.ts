@@ -287,15 +287,68 @@ export async function getProductReviews(productId: string): Promise<Review[]> {
   return (data as Review[]) ?? [];
 }
 
-/** Header search suggestions. Deliberately tiny — it runs on every keystroke. */
-export async function searchSuggestions(term: string): Promise<ProductCard[]> {
-  if (term.trim().length < 2) return [];
+export type SearchSuggestion = Pick<
+  ProductCard,
+  "id" | "name" | "slug" | "price_paisa" | "compare_at_paisa" | "thumbnail_url" | "stock"
+>;
+
+const SUGGESTION_COLUMNS = "id, name, slug, price_paisa, compare_at_paisa, thumbnail_url, stock";
+
+/**
+ * Header search suggestions, from the first letter typed.
+ *
+ * Names come first — those starting with what was typed, then names with a
+ * word starting with it — because a shopper typing "an" means "Anker", not a
+ * product whose description happens to contain "and". From two letters on,
+ * the full-text index (name, brand, category, sku, features, description)
+ * fills the rest, matching word prefixes so "ank" finds "Anker".
+ *
+ * Deliberately tiny: six rows, three small queries on an indexed table, and
+ * the box debounces keystrokes before asking.
+ */
+export async function searchSuggestions(term: string): Promise<SearchSuggestion[]> {
+  const q = term.trim().replace(/\s+/g, " ").slice(0, 60);
+  if (!q) return [];
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("products")
-    .select(PRODUCT_CARD_COLUMNS)
-    .eq("status", "active")
-    .textSearch("search_vector", term, { type: "websearch", config: "simple" })
-    .limit(6);
-  return (data as unknown as ProductCard[]) ?? [];
+  const LIMIT = 6;
+
+  // ILIKE pattern with the wildcards in the user's text escaped.
+  const like = q.replace(/[\\%_]/g, (c) => `\\${c}`);
+  const base = () =>
+    supabase.from("products").select(SUGGESTION_COLUMNS).eq("status", "active");
+
+  const [{ data: starts }, { data: wordStarts }] = await Promise.all([
+    base().ilike("name", `${like}%`).order("units_sold", { ascending: false }).limit(LIMIT),
+    base().ilike("name", `% ${like}%`).order("units_sold", { ascending: false }).limit(LIMIT),
+  ]);
+
+  const out: SearchSuggestion[] = [];
+  const seen = new Set<string>();
+  const push = (rows: unknown) => {
+    for (const r of (rows ?? []) as SearchSuggestion[]) {
+      if (out.length >= LIMIT || seen.has(r.id)) continue;
+      seen.add(r.id);
+      out.push(r);
+    }
+  };
+  push(starts);
+  push(wordStarts);
+
+  if (out.length < LIMIT && q.length >= 2) {
+    // Prefix query for to_tsquery: every word as "word:*", letters and digits
+    // only, so nothing typed can break the query syntax.
+    const words = q
+      .split(" ")
+      .map((w) => w.replace(/[^\p{L}\p{N}]/gu, ""))
+      .filter(Boolean)
+      .slice(0, 5);
+    if (words.length) {
+      const { data } = await base()
+        .textSearch("search_vector", words.map((w) => `${w}:*`).join(" & "), { config: "simple" })
+        .order("units_sold", { ascending: false })
+        .limit(LIMIT);
+      push(data);
+    }
+  }
+  return out;
 }
