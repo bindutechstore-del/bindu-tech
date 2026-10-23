@@ -9,6 +9,7 @@ import {
   DEFAULT_THEME,
   BRAND_PALETTE,
   contrastRatio,
+  readableOn,
   type SiteTheme,
 } from "@/lib/theme/schema";
 import { Button } from "@/components/ui/button";
@@ -38,8 +39,6 @@ function readabilityProblems(c: SiteTheme["colors"]): string[] {
     ["Text on Page background", c.ink, c.surfaceSunken],
     ["Success messages on Surface", c.success, c.surface],
     ["Warning messages on Surface", c.warning, c.surface],
-    ["Shop name on Surface", c.storeName, c.surface],
-    ["Footer text on Footer background", c.footerText, c.footerBg],
   ];
   return checks
     .map(([what, fg, bg]) => [what, contrastRatio(fg, bg)] as const)
@@ -173,7 +172,7 @@ export function DesignForm({
           <p className="mt-0.5 text-xs text-ink-muted">
             A fixed list, because these are compiled in and self-hosted — a font
             named at runtime would cost a blocking request and flash on load.
-            Bangla always uses Hind Siliguri.
+            Bangla always uses Noto Sans Bengali.
           </p>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -330,7 +329,7 @@ function ThemePreview({ theme, storeName }: { theme: SiteTheme; storeName: strin
           className="flex items-center justify-between px-4 py-3"
           style={{ background: c.surface, borderBottom: `1px solid ${c.surfaceSunken}` }}
         >
-          <span className="text-sm font-bold" style={{ color: c.storeName }}>
+          <span className="text-sm font-bold" style={{ color: readableOn(c.storeName, c.surface, 3) }}>
             {theme.showStoreName ? storeName : "Logo"}
           </span>
           <span
@@ -393,7 +392,9 @@ function ThemePreview({ theme, storeName }: { theme: SiteTheme; storeName: strin
           </div>
         </div>
 
-        <div className="px-4 py-3 text-xs" style={{ background: c.footerBg, color: c.footerText }}>
+        {/* Shows what the site will really use: an unreadable text colour is
+            swapped for white or black automatically (readableOn). */}
+        <div className="px-4 py-3 text-xs" style={{ background: c.footerBg, color: readableOn(c.footerText, c.footerBg) }}>
           <p className="font-bold">{storeName}</p>
           <p style={{ opacity: 0.75 }}>Shop · Help · Talk to us — footer</p>
         </div>

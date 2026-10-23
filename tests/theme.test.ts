@@ -3,6 +3,7 @@ import {
   BRAND_PALETTE,
   DEFAULT_THEME,
   contrastRatio,
+  readableOn,
   sanitiseTheme,
   themeToCss,
 } from "@/lib/theme/schema";
@@ -74,5 +75,27 @@ describe("withStoreName", () => {
     expect(JSON.stringify(filled)).not.toContain("{{store}}");
     // The registry itself is not mutated.
     expect(about.title).toBe("About {{store}}");
+  });
+});
+
+describe("footer and shop-name colours stay readable", () => {
+  it("swaps dark footer text for white on a blue footer", () => {
+    const css = themeToCss({
+      ...DEFAULT_THEME,
+      colors: { ...DEFAULT_THEME.colors, footerBg: "#1d4ed8", footerText: "#14161a" },
+    });
+    expect(css).toContain("--color-footer-text:#ffffff");
+  });
+
+  it("keeps a readable choice as it is", () => {
+    const css = themeToCss({
+      ...DEFAULT_THEME,
+      colors: { ...DEFAULT_THEME.colors, footerBg: "#0b0f1a", footerText: "#f2f4f8" },
+    });
+    expect(css).toContain("--color-footer-text:#f2f4f8");
+  });
+
+  it("does not let a near-white shop name vanish on a white header", () => {
+    expect(readableOn("#fafafa", "#ffffff", 3)).toBe("#14161a");
   });
 });

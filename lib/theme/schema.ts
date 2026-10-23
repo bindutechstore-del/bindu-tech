@@ -140,6 +140,17 @@ export function contrastRatio(a: string, b: string): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
+/**
+ * `fg` when it reads well on `bg`, otherwise white or near-black, whichever
+ * reads better. Used where a choice could make text vanish: the shop owner
+ * set a blue footer and left the footer text dark, and the links all but
+ * disappeared into the background.
+ */
+export function readableOn(fg: string, bg: string, min = 4.5): string {
+  if (contrastRatio(fg, bg) >= min) return fg;
+  return contrastRatio("#ffffff", bg) >= contrastRatio("#14161a", bg) ? "#ffffff" : "#14161a";
+}
+
 const HEX = /^#[0-9a-f]{6}$/i;
 
 /** Anything stored is untrusted: a bad hex would emit broken CSS site-wide. */
@@ -199,9 +210,10 @@ export function themeToCss(theme: SiteTheme): string {
     `--color-danger:${c.danger}`,
     `--color-success:${c.success}`,
     `--color-warning:${c.warning}`,
-    `--color-store-name:${c.storeName}`,
+    // Large bold text: 3 : 1 is enough for the name; footer links need 4.5.
+    `--color-store-name:${readableOn(c.storeName, c.surface, 3)}`,
     `--color-footer-bg:${c.footerBg}`,
-    `--color-footer-text:${c.footerText}`,
+    `--color-footer-text:${readableOn(c.footerText, c.footerBg)}`,
     `--radius-card:${theme.radius}rem`,
   ];
 
